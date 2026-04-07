@@ -146,7 +146,7 @@ type PlCountReq struct {
 }
 
 type PlCountResp struct {
-	types.RespCommon[any]
+	Code int64 `json:"code,omitempty"`
 }
 
 // PlCount 播放计数接口 /weapi/pl/count

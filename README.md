@@ -31,8 +31,16 @@
 ./ncmctl -c ./config.yaml scrobble        # 刷歌
 ````
 
+##debug 调试日志运行：
+
+```shel
+./ncmctl -c ./config.yaml --debug scrobble
+```
+
+
 
 自编译：
+
 ````shell
 # Linux amd64
 $env:CGO_ENABLED="0"; $env:GOOS="linux"; $env:GOARCH="amd64"; go build -o dist/ncmctl_linux_amd64 ./cmd/ncmctl/

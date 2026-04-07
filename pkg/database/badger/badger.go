@@ -40,7 +40,11 @@ type Badger struct {
 }
 
 func New(path string) (*Badger, error) {
-	var opts = badger.DefaultOptions(path).WithLoggingLevel(badger.WARNING)
+	var opts = badger.DefaultOptions(path).
+		WithLoggingLevel(badger.WARNING).
+		WithValueLogFileSize(16 * 1024 * 1024). // 限制 VLog 文件大小为 16MB
+		WithMemTableSize(16 * 1024 * 1024).     // 限制 MemTable 大小为 16MB (控制 .mem 文件大小)
+		WithNumMemtables(1)                     // 内存中最少只需维持1-2张表即可，无需默认的5张大表
 	// .WithSyncWrites(false)
 	db, err := badger.Open(opts)
 	if err != nil {

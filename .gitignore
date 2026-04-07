@@ -978,3 +978,4 @@ note.md
 ./claude
 /dist
 config/scrobble.yaml
+config/cookie.txt

@@ -73,6 +73,35 @@ type Client struct {
 	// agent  *Agent
 }
 
+// readCloserWrapper wraps a reader to add a Closer
+type readCloserWrapper struct {
+	io.Reader
+	io.Closer
+}
+
+// brTransport is a custom RoundTripper that transparently decompresses Brotli responses
+type brTransport struct {
+	http.RoundTripper
+}
+
+func (t *brTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	resp, err := t.RoundTripper.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Header.Get("Content-Encoding") == "br" {
+		resp.Body = &readCloserWrapper{
+			Reader: brotli.NewReader(resp.Body),
+			Closer: resp.Body,
+		}
+		resp.Header.Del("Content-Encoding")
+		resp.Header.Del("Content-Length")
+		resp.ContentLength = -1
+		resp.Uncompressed = true
+	}
+	return resp, nil
+}
+
 func New(cfg *Config) *Client {
 	client, err := NewClient(cfg, log.Default)
 	if err != nil {
@@ -104,6 +133,14 @@ func NewClient(cfg *Config, l *log.Logger) (*Client, error) {
 	cli.SetRetryCount(cfg.Retry)
 	cli.SetTimeout(cfg.Timeout)
 	cli.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+
+	// wrap transport for transparent brotli decompression
+	origTransport := cli.GetClient().Transport
+	if origTransport == nil {
+		origTransport = http.DefaultTransport
+	}
+	cli.GetClient().Transport = &brTransport{RoundTripper: origTransport}
+
 	cli.SetDebug(cfg.Debug)
 	cli.SetCookieJar(jar)
 	cli.OnAfterResponse(contentEncoding)
