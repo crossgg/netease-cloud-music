@@ -333,6 +333,7 @@ func (c *Scrobble) executeHARSimulation(ctx context.Context, request *weapi.Api,
 		}
 	}
 
+	var remoteCount int
 	// 从远程URL获取歌曲列表
 	if cfg.RemoteSongListUrl != "" {
 		c.cmd.Printf("📥 从远程地址获取歌曲列表: %s\n", cfg.RemoteSongListUrl)
@@ -342,6 +343,7 @@ func (c *Scrobble) executeHARSimulation(ctx context.Context, request *weapi.Api,
 		}
 		c.cmd.Printf("   获取到 %d 首歌曲\n", len(remoteIds))
 		allSongIds = append(allSongIds, remoteIds...)
+		remoteCount = len(remoteIds)
 	}
 
 	if len(allSongIds) == 0 {
@@ -369,7 +371,7 @@ func (c *Scrobble) executeHARSimulation(ctx context.Context, request *weapi.Api,
 	}
 
 	c.cmd.Printf("🎵 HAR精确模拟模式启动\n")
-	c.cmd.Printf("   歌曲数量: %d (普通: %d, 云盘: %d)\n", len(list), len(cfg.SongIds), len(cfg.CloudSongIds))
+	c.cmd.Printf("   歌曲数量: %d (本地: %d, 远程: %d, 云盘: %d)\n", len(list), len(cfg.SongIds), remoteCount, len(cfg.CloudSongIds))
 	c.cmd.Printf("   播放时长: %s\n", func() string {
 		if cfg.Duration == 0 {
 			return "歌曲实际时长"
