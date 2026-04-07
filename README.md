@@ -50,7 +50,7 @@ $env:CGO_ENABLED="0"; $env:GOOS="linux"; $env:GOARCH="arm64"; go build -o dist/n
 
 # Windows x64
 $env:CGO_ENABLED="0"; $env:GOOS="windows"; $env:GOARCH="amd64"; go build -o dist/ncmctl_windows_amd64.exe ./cmd/ncmctl/
-
+````
 ------------------
 以下为原作者文档：
 ------------------------
