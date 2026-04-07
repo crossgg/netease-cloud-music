@@ -92,6 +92,11 @@ func (c *Task) addFlags() {
 	c.cmd.PersistentFlags().BoolVar(&c.opts.Scrobble, "scrobble", false, "enabled scrobble task")
 	c.cmd.PersistentFlags().StringVar(&c.opts.ScrobbleOptsCrontab, "scrobble.cron", "0 18 * * *", "scrobble crontab expression. usage detail: https://crontab.guru")
 	c.cmd.PersistentFlags().Int64Var(&c.opts.ScrobbleOpts.Num, "scrobble.num",  300, "scrobble num of songs")
+	c.cmd.PersistentFlags().StringSliceVar(&c.opts.ScrobbleOpts.SongIds, "scrobble.songs", nil, "specify song IDs to play, e.g. --scrobble.songs 3366663042,xxx")
+	c.cmd.PersistentFlags().Int64Var(&c.opts.ScrobbleOpts.PlayDuration, "scrobble.duration", -1, "play duration per song in seconds, 0=actual duration, -1=fast")
+	c.cmd.PersistentFlags().BoolVar(&c.opts.ScrobbleOpts.Loop, "scrobble.loop", false, "enable loop playback")
+	c.cmd.PersistentFlags().Int64Var(&c.opts.ScrobbleOpts.LoopMinutes, "scrobble.loop-time", 0, "loop duration in minutes")
+	c.cmd.PersistentFlags().StringVar(&c.opts.ScrobbleOpts.ConfigFile, "scrobble.config", "", "scrobble config file path (YAML)")
 
 	c.cmd.PersistentFlags().BoolVar(&c.opts.SignIn, "sign", false, "enabled sign task")
 	c.cmd.PersistentFlags().StringVar(&c.opts.SignInOptsCrontab, "sign.cron", "0 10 * * *", "sign crontab expression. usage detail: https://crontab.guru")

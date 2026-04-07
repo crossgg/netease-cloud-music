@@ -1,5 +1,51 @@
 # 🎵 netease-cloud-music
 
+
+## 基于：https://github.com/chaunsin/netease-cloud-music/ 修改
+
+1. 修改了 scrobble 刷歌功能为完整听歌
+
+## 准备工作
+0、下载release中的对应架构二进制文件。
+
+1、下载[config.yaml](./config/config.yaml)配置文件，
+   自定义刷歌的configFile配置文件、日志、cookie等路径 
+
+   #默认配置是和程序在同一目录
+
+2、下载刷歌的configFile配置文件[scrobble.example.yaml](./config/scrobble.example.yaml)，改名为`scrobble.yaml`
+   自定义刷歌的songIds、cloudSongIds、remoteSongListUrl、duration、count等参数
+
+3、登陆
+
+````shell
+./ncmctl -c ./config.yaml login  cookie 'cookie字符串内容'     # 登陆方式一：直接输入cookie
+./ncmctl -c ./config.yaml login cookie -f cookie.txt         # 登陆方式二：从文件导入cookie
+./ncmctl -c ./config.yaml login  phone 188xxx8888             # 登陆方式三：手机号登录
+## 别的登录方式参考：https://github.com/chaunsin/netease-cloud-music/blob/master/docs/login.md
+# ./ncmctl -c ./config.yaml login 调用自定义配置文件
+## 登录后
+````
+运行
+````shell
+./ncmctl -c ./config.yaml scrobble        # 刷歌
+````
+
+
+自编译：
+````shell
+# Linux amd64
+$env:CGO_ENABLED="0"; $env:GOOS="linux"; $env:GOARCH="amd64"; go build -o dist/ncmctl_linux_amd64 ./cmd/ncmctl/
+
+# Linux arm64
+$env:CGO_ENABLED="0"; $env:GOOS="linux"; $env:GOARCH="arm64"; go build -o dist/ncmctl_linux_arm64 ./cmd/ncmctl/
+
+# Windows x64
+$env:CGO_ENABLED="0"; $env:GOOS="windows"; $env:GOARCH="amd64"; go build -o dist/ncmctl_windows_amd64.exe ./cmd/ncmctl/
+
+------------------
+以下为原作者文档：
+------------------------
 [![GoDoc](https://godoc.org/github.com/chaunsin/netease-cloud-music?status.svg)](https://godoc.org/github.com/chaunsin/netease-cloud-music) [![Go Report Card](https://goreportcard.com/badge/github.com/chaunsin/netease-cloud-music)](https://goreportcard.com/report/github.com/chaunsin/netease-cloud-music) [![ci](https://github.com/chaunsin/netease-cloud-music/actions/workflows/ci.yml/badge.svg)](https://github.com/chaunsin/netease-cloud-music/actions/workflows/ci.yml) [![deploy image](https://github.com/chaunsin/netease-cloud-music/actions/workflows/deploy_image.yml/badge.svg)](https://github.com/chaunsin/netease-cloud-music/actions/workflows/deploy_image.yml)
 
 > 🚀 网易云音乐 Golang API 接口 + 命令行工具套件 + 一键完成每日任务

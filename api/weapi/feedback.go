@@ -139,3 +139,63 @@ func (a *Api) WebLog(ctx context.Context, req *WebLogReq) (*WebLogResp, error) {
 	_ = reply
 	return &resp, nil
 }
+
+// PlCountReq 播放计数请求
+type PlCountReq struct {
+	CsrfToken string `json:"csrf_token"`
+}
+
+type PlCountResp struct {
+	types.RespCommon[any]
+}
+
+// PlCount 播放计数接口 /weapi/pl/count
+// 浏览器播放歌曲时每隔约60秒会调用一次
+func (a *Api) PlCount(ctx context.Context, req *PlCountReq) (*PlCountResp, error) {
+	var (
+		url  = "https://music.163.com/weapi/pl/count"
+		resp PlCountResp
+		opts = api.NewOptions()
+	)
+	if req.CsrfToken == "" {
+		csrf, _ := a.client.GetCSRF(url)
+		req.CsrfToken = csrf
+	}
+
+	reply, err := a.client.Request(ctx, url, req, &resp, opts)
+	if err != nil {
+		return nil, err
+	}
+	_ = reply
+	return &resp, nil
+}
+
+// P2PFlowSwitchReq P2P心跳请求
+type P2PFlowSwitchReq struct {
+	CsrfToken string `json:"csrf_token"`
+}
+
+type P2PFlowSwitchResp struct {
+	types.RespCommon[any]
+}
+
+// P2PFlowSwitch P2P心跳检查 /weapi/activity/p2p/flow/switch/get
+// 浏览器每次新播放一首歌曲时会调用
+func (a *Api) P2PFlowSwitch(ctx context.Context, req *P2PFlowSwitchReq) (*P2PFlowSwitchResp, error) {
+	var (
+		url  = "https://music.163.com/weapi/activity/p2p/flow/switch/get"
+		resp P2PFlowSwitchResp
+		opts = api.NewOptions()
+	)
+	if req.CsrfToken == "" {
+		csrf, _ := a.client.GetCSRF(url)
+		req.CsrfToken = csrf
+	}
+
+	reply, err := a.client.Request(ctx, url, req, &resp, opts)
+	if err != nil {
+		return nil, err
+	}
+	_ = reply
+	return &resp, nil
+}

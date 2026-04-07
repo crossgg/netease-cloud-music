@@ -38,12 +38,17 @@ func init() {
 	}
 }
 
+type ScrobbleConfig struct {
+	ConfigFile string `json:"configFile" yaml:"configFile"` // scrobble YAML 配置文件路径
+}
+
 type Config struct {
 	v        *viper.Viper
 	Version  string           `json:"version" yaml:"version"`
 	Log      *log.Config      `json:"log" yaml:"log"`
 	Network  *api.Config      `json:"network" yaml:"network"`
 	Database *database.Config `json:"database" yaml:"database"`
+	Scrobble *ScrobbleConfig  `json:"scrobble" yaml:"scrobble"`
 }
 
 func (c *Config) Validate() error {

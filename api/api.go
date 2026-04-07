@@ -47,10 +47,11 @@ import (
 )
 
 type Config struct {
-	Debug   bool          `json:"debug" yaml:"debug"`
-	Timeout time.Duration `json:"timeout" yaml:"timeout"`
-	Retry   int           `json:"retry" yaml:"retry"`
-	Cookie  cookie.Config `json:"cookie" yaml:"cookie"`
+	Debug     bool          `json:"debug" yaml:"debug"`
+	Timeout   time.Duration `json:"timeout" yaml:"timeout"`
+	Retry     int           `json:"retry" yaml:"retry"`
+	Cookie    cookie.Config `json:"cookie" yaml:"cookie"`
+	UserAgent string        `json:"userAgent" yaml:"userAgent"`
 	// Agent   *Agent                     `json:"agent" yaml:"agent"`
 }
 
@@ -208,6 +209,10 @@ func (c *Client) Request(ctx context.Context, url string, req, resp interface{},
 	}
 
 	// todo: set User-Agent config
+	ua := c.cfg.UserAgent
+	if ua == "" {
+		ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) NeteaseMusicDesktop/2.3.17.1034"
+	}
 
 	request := c.cli.R().
 		SetContext(ctx).
@@ -218,7 +223,7 @@ func (c *Client) Request(ctx context.Context, url string, req, resp interface{},
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").
 		SetHeader("Accept-language", "zh-CN,zh-Hans;q=0.9").
 		SetHeader("Referer", "https://music.163.com").
-		SetHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) NeteaseMusicDesktop/2.3.17.1034").
+		SetHeader("User-Agent", ua).
 		SetCookie(&http.Cookie{Name: "__remember_me", Value: "true", Domain: ""})
 	// SetHeader("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.1 Chrome/121.0.0.0 Mobile Safari/537.36")
 

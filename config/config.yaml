@@ -13,7 +13,7 @@ log:
   # 滚动日志配置
   rotate:
     # 日志文件保存路径
-    filename: "${HOME}/.ncmctl/log/ncm.log"
+    filename: "./log/ncm.log"
     # 单个日志文件最大大小,单位MB
     maxsize: 100
     # 日志文件保留天数
@@ -35,12 +35,21 @@ network:
   # cookie 配置用于保存登录相关信息
   cookie:
     # cookie 文件保存路径
-    filepath: "${HOME}/.ncmctl/cookie.json"
+    filepath: "./cookie.json"
     # cookie 刷盘间隔,如果间隔过大当程序崩溃或退出,可能导致cookie值不能刷到磁盘中.如果间隔过小,会导致频繁刷盘,影响性能.
     interval: 3s
+  # 自定义 User-Agent (留空使用默认值)
+  # 默认: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) NeteaseMusicDesktop/2.3.17.1034
+  userAgent: ""
 # 数据缓存配置
 database:
   # 缓存驱动,目前支持badger
   driver: badger
   # 缓存目录
-  path: "${HOME}/.ncmctl/database/badger/"
+  path: "./database/badger/"
+# scrobble 刷歌配置
+scrobble:
+  # scrobble 配置文件路径 (YAML格式, 参考 scrobble.example.yaml)
+  # 设置后运行 ncmctl scrobble 时自动使用该配置文件
+  # 留空则使用默认行为(从排行榜刷歌)
+  configFile: "./scrobble.yaml"
