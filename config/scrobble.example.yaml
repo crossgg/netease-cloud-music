@@ -26,8 +26,7 @@ songIds:
 # 远程获取的 songId 会与本地 songIds 合并一起播放
 # 留空或注释掉则不启用远程获取
 # ============================================================
-remoteSongListUrl: ""
-# remoteSongListUrl: "https://raw.githubusercontent.com/crosscc/netease-cloud-music/refs/heads/main/songlist.txt"
+remoteSongListUrl: "https://raw.githubusercontent.com/crossgg/netease-cloud-music/refs/heads/main/songlist.txt"
 
 # ============================================================
 # 每首歌的播放时长(秒)
@@ -41,4 +40,4 @@ duration: 0
 # 所有歌曲会循环播放，直到达到此次数
 # 每天最多可刷 300 首 (服务端限制)
 # ============================================================
-count: 300
+count: 50

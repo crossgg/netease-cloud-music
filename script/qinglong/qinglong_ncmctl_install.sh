@@ -39,7 +39,7 @@ BINARY_NAME="ncmctl"
 # 完整路径
 BINARY_PATH="$INSTALL_DIR/$BINARY_NAME"
 # 仓库
-REPO="chaunsin/netease-cloud-music"
+REPO="crosscc/netease-cloud-music"
 # 临时目录
 TEMP_DIR="/tmp/ncmctl_upgrade"
 # 系统架构
