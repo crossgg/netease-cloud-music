@@ -251,6 +251,7 @@ func (c *Task) execute(ctx context.Context, args []string) error {
 		if o.SignIn {
 			c.cmd.Println("[sign] 执行...")
 			s := NewSignIn(c.root, c.l)
+			s.cmd.DisableFlagParsing = true
 			s.opts = c.opts.SignInOpts
 			if err := s.Command().ExecuteContext(ctx); err != nil {
 				errs = append(errs, fmt.Errorf("[sign] %w", err))
@@ -259,6 +260,7 @@ func (c *Task) execute(ctx context.Context, args []string) error {
 		if o.Partner {
 			c.cmd.Println("[partner] 执行...")
 			p := NewPartner(c.root, c.l)
+			p.cmd.DisableFlagParsing = true
 			p.opts = c.opts.PartnerOpts
 			if err := p.Command().ExecuteContext(ctx); err != nil {
 				errs = append(errs, fmt.Errorf("[partner] %w", err))
@@ -267,6 +269,7 @@ func (c *Task) execute(ctx context.Context, args []string) error {
 		if o.Scrobble {
 			c.cmd.Println("[scrobble] 执行...")
 			s := NewScrobble(c.root, c.l)
+			s.cmd.DisableFlagParsing = true
 			s.opts = c.opts.ScrobbleOpts
 			if err := s.Command().ExecuteContext(ctx); err != nil {
 				errs = append(errs, fmt.Errorf("[scrobble] %w", err))
@@ -275,6 +278,7 @@ func (c *Task) execute(ctx context.Context, args []string) error {
 		if o.PlayIDs {
 			c.cmd.Println("[playids] 执行...")
 			p := NewPlayIDs(c.root, c.l)
+			p.cmd.DisableFlagParsing = true
 			p.opts = c.opts.PlayIDsOpts
 			if err := p.Command().ExecuteContext(ctx); err != nil {
 				errs = append(errs, fmt.Errorf("[playids] %w", err))
@@ -283,6 +287,7 @@ func (c *Task) execute(ctx context.Context, args []string) error {
 		if o.MusicianVip {
 			c.cmd.Println("[musician-vip] 执行...")
 			mv := NewMusicianVip(c.root, c.l)
+			mv.cmd.DisableFlagParsing = true
 			if err := mv.Command().ExecuteContext(ctx); err != nil {
 				errs = append(errs, fmt.Errorf("[musician-vip] %w", err))
 			}
