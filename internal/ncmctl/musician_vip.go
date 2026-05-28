@@ -124,12 +124,12 @@ func (c *MusicianVip) execute(ctx context.Context) error {
 
 	// 遍历子任务，检查并执行
 	for _, sub := range resp.Data.FurtherTask.Children {
-		c.cmd.Printf("[musician-vip] 任务: %s — 状态: %d, 进度: %d/%d\n",
+		c.cmd.Printf("[musician-vip] 任务: %s — 状态: %d, 进度: %d/%d\\n",
 			sub.Name, sub.MissionStatus, sub.ProgressRate, sub.TotalCompleteNum)
 
 		// 任务已完成则跳过
 		if sub.MissionStatus == 100 {
-			c.cmd.Printf("[musician-vip] ✅ 任务已完成: %s\n", sub.Name)
+			c.cmd.Printf("[musician-vip] ✅ 任务已完成: %s\\n", sub.Name)
 			continue
 		}
 
@@ -139,18 +139,18 @@ func (c *MusicianVip) execute(ctx context.Context) error {
 			// 发布图文笔记任务
 			if err := c.handleNoteTask(ctx, cli, eapiCli, sub); err != nil {
 				log.Error("[musician-vip] 笔记任务执行失败: %s", err)
-				c.cmd.Printf("[musician-vip] ❌ 笔记任务失败: %s\n", err)
+				c.cmd.Printf("[musician-vip] ❌ 笔记任务失败: %s\\n", err)
 			}
 
 		case "mission_code_recently_play_count":
-			// 播放任务
-			if err := c.handlePlayTask(ctx, sub); err != nil {
+			// 播放任务：服务端子任务 progressRate 可能不准确，使用 recentPlayCount30 作为实际播放数
+			if err := c.handlePlayTask(ctx, sub, resp.Data.RecentPlayCount30); err != nil {
 				log.Error("[musician-vip] 播放任务执行失败: %s", err)
-				c.cmd.Printf("[musician-vip] ❌ 播放任务失败: %s\n", err)
+				c.cmd.Printf("[musician-vip] ❌ 播放任务失败: %s\\n", err)
 			}
 
 		default:
-			c.cmd.Printf("[musician-vip] ⚠️ 未知任务类型: %s\n", sub.MissionCode)
+			c.cmd.Printf("[musician-vip] ⚠️ 未知任务类型: %s\\n", sub.MissionCode)
 		}
 	}
 
@@ -222,13 +222,14 @@ func (c *MusicianVip) handleNoteTask(ctx context.Context, cli *api.Client, eapiC
 }
 
 // handlePlayTask 处理播放任务
-func (c *MusicianVip) handlePlayTask(ctx context.Context, sub eapi.MusicianVipSubTask) error {
+func (c *MusicianVip) handlePlayTask(ctx context.Context, sub eapi.MusicianVipSubTask, recentPlayCount30 int) error {
 	c.cmd.Println("[musician-vip] 处理播放任务...")
 
 	cfg := c.root.Cfg.MusicianVip.Play
 
-	// 检查是否需要播放（进度 < 目标）
-	if sub.ProgressRate >= sub.TotalCompleteNum {
+	// 使用 recentPlayCount30 作为实际播放数（服务端子任务 progressRate 可能不准确）
+	c.cmd.Printf("[musician-vip] 当前播放进度: %d/%d\\n", recentPlayCount30, sub.TotalCompleteNum)
+	if recentPlayCount30 >= sub.TotalCompleteNum {
 		c.cmd.Println("[musician-vip] 播放任务已完成，无需播放")
 		return nil
 	}
