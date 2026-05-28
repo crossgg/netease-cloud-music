@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   package:
-    if: ${{ github.repository == '3899/netease-cloud-music' }}
+    if: ${{ github.repository == 'crossgg/netease-cloud-music' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

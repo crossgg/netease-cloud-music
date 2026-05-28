@@ -1,5 +1,5 @@
 export IMAGE_VERSION ?= latest
-export IMAGE_NAME?=chaunsin/ncmctl:${IMAGE_VERSION}
+export IMAGE_NAME?=crossgg/ncmctl:${IMAGE_VERSION}
 CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 COMMIT_HASH := $(shell git rev-parse --short=7 HEAD)
 BUILD_TIME=$(shell date "+%Y-%m-%d %H:%M:%S%z")
@@ -28,9 +28,9 @@ push-image:
 
 # 当使用docker部署时,如果没有登录账号则需要先登录
 login:
-	docker run --rm -it -v ./data:/root chaunsin/ncmctl:$(VERSION) /app/ncmctl login qrcode
+	docker run --rm -it -v ./data:/root crossgg/ncmctl:$(VERSION) /app/ncmctl login qrcode
 
 # 运行服务，注意挂载的目录和登录挂载的目录要一致
 task:
-	docker run -it -d -v ./data:/root chaunsin/ncmctl:$(VERSION) /app/ncmctl task --sign --scrobble
+	docker run -it -d -v ./data:/root crossgg/ncmctl:$(VERSION) /app/ncmctl task --sign --scrobble
 	#docker-compose up -d

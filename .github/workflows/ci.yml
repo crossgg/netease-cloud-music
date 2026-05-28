@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   build:
-    if: ${{ github.repository == '3899/netease-cloud-music' }}
+    if: ${{ github.repository == 'crossgg/netease-cloud-music' }}
     runs-on: ubuntu-latest
     steps:
       # Step 0: 检出代码

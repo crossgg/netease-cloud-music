@@ -11,7 +11,7 @@ on:
 jobs:
   push-ghcr:
     name: Push Docker image to GHCR
-    if: ${{ github.repository == '3899/netease-cloud-music' }}
+    if: ${{ github.repository == 'crossgg/netease-cloud-music' }}
     runs-on: ubuntu-latest
     permissions:
       packages: write

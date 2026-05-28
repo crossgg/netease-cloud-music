@@ -11,7 +11,7 @@ LABEL org.opencontainers.image.authors="chaunsin"
 LABEL org.opencontainers.image.vendor="chaunsin"
 LABEL org.opencontainers.image.title="ncmctl CLI"
 LABEL org.opencontainers.image.description="neatse cloud music command tool"
-LABEL org.opencontainers.image.source="https://github.com/3899/netease-cloud-music"
+LABEL org.opencontainers.image.source="https://github.com/crossgg/netease-cloud-music"
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.version=${VERSION}
 

@@ -56,7 +56,7 @@ func New() *Root {
 		cmd: &cobra.Command{
 			Use:     "ncmctl",
 			Short:   "ncmctl command",
-			Long:    "ncmctl is a toolbox for netease cloud music\n\nMIT License Copyright (c) 2024 chaunsin\nhttps://github.com/chaunsin/netease-cloud-music\n" + title,
+			Long:    "ncmctl is a toolbox for netease cloud music\n\nMIT License Copyright (c) 2024 chaunsin\nhttps://github.com/crossgg/netease-cloud-music\n" + title,
 			Example: "  ncmctl cloud\n  ncmctl crypto\n  ncmctl login\n  ncmctl curl\n  ncmctl partner\n  ncmctl playids\n  ncmctl scrobble\n  ncmctl sign\n  ncmctl task",
 		},
 	}

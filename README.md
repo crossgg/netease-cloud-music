@@ -1,5 +1,5 @@
-<a href="https://github.com/3899/netease-cloud-music">
-  <img src="https://socialify.git.ci/3899/netease-cloud-music/image?description=1&descriptionEditable=%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90%20Golang%20API%20%E6%8E%A5%E5%8F%A3%20%2B%20%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%B7%A5%E5%85%B7%E5%A5%97%E4%BB%B6%20%2B%20%E4%B8%80%E9%94%AE%E5%AE%8C%E6%88%90%E6%AF%8F%E6%97%A5%E4%BB%BB%E5%8A%A1&font=Source%20Code%20Pro&logo=https%3A%2F%2Fp6.music.126.net%2Fobj%2Fwo3DlcOGw6DClTvDisK1%2F62177614927%2F22ad%2F1953%2Fa6cf%2Fe7007953d5942445a0444ca346bd06be.png%3Fraw%3Dtrue&name=1&owner=1&pattern=Floating%20Cogs&theme=Auto" alt="netease-cloud-music" />
+<a href="https://github.com/crossgg/netease-cloud-music">
+  <img src="https://socialify.git.ci/crossgg/netease-cloud-music/image?description=1&descriptionEditable=%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90%20Golang%20API%20%E6%8E%A5%E5%8F%A3%20%2B%20%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%B7%A5%E5%85%B7%E5%A5%97%E4%BB%B6%20%2B%20%E4%B8%80%E9%94%AE%E5%AE%8C%E6%88%90%E6%AF%8F%E6%97%A5%E4%BB%BB%E5%8A%A1&font=Source%20Code%20Pro&logo=https%3A%2F%2Fp6.music.126.net%2Fobj%2Fwo3DlcOGw6DClTvDisK1%2F62177614927%2F22ad%2F1953%2Fa6cf%2Fe7007953d5942445a0444ca346bd06be.png%3Fraw%3Dtrue&name=1&owner=1&pattern=Floating%20Cogs&theme=Auto" alt="netease-cloud-music" />
 </a>
 
 <div align="center">
@@ -8,17 +8,17 @@
   <div>
     <a href="./LICENSE">
       <img
-        src="https://img.shields.io/github/license/3899/netease-cloud-music?style=flat-square"
+        src="https://img.shields.io/github/license/crossgg/netease-cloud-music?style=flat-square"
       />
     </a >
-    <a href="https://github.com/3899/netease-cloud-music/releases">
+    <a href="https://github.com/crossgg/netease-cloud-music/releases">
       <img
-        src="https://img.shields.io/github/v/release/3899/netease-cloud-music?style=flat-square"
+        src="https://img.shields.io/github/v/release/crossgg/netease-cloud-music?style=flat-square"
       />
     </a >
-    <a href="https://github.com/3899/netease-cloud-music/releases">
+    <a href="https://github.com/crossgg/netease-cloud-music/releases">
       <img
-        src="https://img.shields.io/github/downloads/3899/netease-cloud-music/total?style=flat-square"
+        src="https://img.shields.io/github/downloads/crossgg/netease-cloud-music/total?style=flat-square"
       />  
     </a >
   </div>
@@ -27,7 +27,7 @@
 
 # 🎵 netease-cloud-music
 
-> 🎖 本项目基于开源项目 [netease-cloud-music](https://github.com/chaunsin/netease-cloud-music) 完成二次开发与功能拓展，谨向原作者及开源社区致以诚挚谢意。
+> 🎖 本项目基于开源项目 [netease-cloud-music](https://github.com/crossgg/netease-cloud-music) 完成二次开发与功能拓展，谨向原作者及开源社区致以诚挚谢意。
 
 ## 本次新增功能说明
 
@@ -262,7 +262,7 @@ musicianVip:
 当前仓库建议直接使用 GitHub Container Registry 镜像：
 
 ```shell
-docker pull ghcr.io/3899/netease-cloud-music:latest
+docker pull ghcr.io/crossgg/netease-cloud-music:latest
 ```
 
 如果使用 Docker，建议把歌曲文件挂载进容器，然后显式调用 `playids` 或 `task --playids`：
@@ -271,7 +271,7 @@ docker pull ghcr.io/3899/netease-cloud-music:latest
 docker run --rm -it \
   -v ${PWD}/data:/root \
   -v ${PWD}/song_ids.txt:/root/song_ids.txt:ro \
-  ghcr.io/3899/netease-cloud-music:latest \
+  ghcr.io/crossgg/netease-cloud-music:latest \
   /app/ncmctl playids --ids-file /root/song_ids.txt --num 10
 ```
 
@@ -281,7 +281,7 @@ docker run --rm -it \
 docker run --rm -it \
   -v ${PWD}/data:/root \
   -v ${PWD}/song_ids.txt:/root/song_ids.txt:ro \
-  ghcr.io/3899/netease-cloud-music:latest \
+  ghcr.io/crossgg/netease-cloud-music:latest \
   /app/ncmctl task --playids --playids.ids-file /root/song_ids.txt --playids.num 50
 ```
 
@@ -295,14 +295,14 @@ docker run --rm -it \
 ## 以下为原作者文档
 
 ---
-[![GoDoc](https://godoc.org/github.com/chaunsin/netease-cloud-music?status.svg)](https://godoc.org/github.com/chaunsin/netease-cloud-music) [![Go Report Card](https://goreportcard.com/badge/github.com/chaunsin/netease-cloud-music)](https://goreportcard.com/report/github.com/chaunsin/netease-cloud-music) [![ci](https://github.com/chaunsin/netease-cloud-music/actions/workflows/ci.yml/badge.svg)](https://github.com/chaunsin/netease-cloud-music/actions/workflows/ci.yml) [![deploy image](https://github.com/chaunsin/netease-cloud-music/actions/workflows/deploy_image.yml/badge.svg)](https://github.com/chaunsin/netease-cloud-music/actions/workflows/deploy_image.yml)
+[![GoDoc](https://godoc.org/github.com/crossgg/netease-cloud-music?status.svg)](https://godoc.org/github.com/crossgg/netease-cloud-music) [![Go Report Card](https://goreportcard.com/badge/github.com/crossgg/netease-cloud-music)](https://goreportcard.com/report/github.com/crossgg/netease-cloud-music) [![ci](https://github.com/crossgg/netease-cloud-music/actions/workflows/ci.yml/badge.svg)](https://github.com/crossgg/netease-cloud-music/actions/workflows/ci.yml) [![deploy image](https://github.com/crossgg/netease-cloud-music/actions/workflows/deploy_image.yml/badge.svg)](https://github.com/crossgg/netease-cloud-music/actions/workflows/deploy_image.yml)
 
 > 🚀 网易云音乐 Golang API 接口 + 命令行工具套件 + 一键完成每日任务
 
 ## ⚠️ 重要声明
 
 > **📅 2025-06-03 更新：**
-> 目前风控极为严格，刷歌功能存在较高封号风险，不建议使用。如执意使用并收到 [非法挂机行为警告](https://github.com/chaunsin/netease-cloud-music/issues/34)
+> 目前风控极为严格，刷歌功能存在较高封号风险，不建议使用。如执意使用并收到 [非法挂机行为警告](https://github.com/crossgg/netease-cloud-music/issues/34)
 > ，请立即终止，否则后果自负！
 
 - 🚫 **本项目仅供个人学习使用，切勿用于商业用途或非法用途！**
@@ -370,7 +370,7 @@ docker run --rm -it \
 | `eapi`  | PC 端、移动端    |
 
 > 💡 **提示：** 目前主要实现了 `weapi`
-> ，接口相对较全，推荐使用。如需其他接口可提 [Issue](https://github.com/chaunsin/netease-cloud-music/issues)。
+> ，接口相对较全，推荐使用。如需其他接口可提 [Issue](https://github.com/crossgg/netease-cloud-music/issues)。
 
 ---
 
@@ -389,16 +389,16 @@ docker run --rm -it \
 
 ### 方式一：下载预编译版本
 
-直接从 [Releases](https://github.com/chaunsin/netease-cloud-music/releases) 页面下载对应平台的二进制文件。
+直接从 [Releases](https://github.com/crossgg/netease-cloud-music/releases) 页面下载对应平台的二进制文件。
 
 ### 方式二：源码安装
 
 ```shell
 # 直接安装
-go install github.com/chaunsin/netease-cloud-music/cmd/ncmctl@latest
+go install github.com/crossgg/netease-cloud-music/cmd/ncmctl@latest
 
 # 或者克隆后安装
-git clone https://github.com/chaunsin/netease-cloud-music.git
+git clone https://github.com/crossgg/netease-cloud-music.git
 cd netease-cloud-music && make install
 ```
 
@@ -408,18 +408,18 @@ cd netease-cloud-music && make install
 
 ```shell
 # Docker Hub
-docker pull chaunsin/ncmctl:latest
+docker pull crossgg/ncmctl:latest
 
 # GitHub Container Registry
-docker pull ghcr.io/chaunsin/ncmctl:latest
+docker pull ghcr.io/crossgg/ncmctl:latest
 ```
 
-> 📖 Docker 使用文档：https://hub.docker.com/r/chaunsin/ncmctl
+> 📖 Docker 使用文档：https://hub.docker.com/r/crossgg/ncmctl
 
 **自行编译镜像：**
 
 ```shell
-git clone https://github.com/chaunsin/netease-cloud-music.git
+git clone https://github.com/crossgg/netease-cloud-music.git
 cd netease-cloud-music && make build-image
 ```
 
@@ -527,7 +527,7 @@ ncmctl login cookiecloud -u <用户名> -p <密码> -s http://0.0.0.0:8088
 #### 5️⃣ ~~二维码登录~~（已弃用）
 
 > ⚠️ 由于网易云风控严重，扫码登录会出现 `8821 需要行为验证码验证`
-> 错误，暂不支持。详见 [Issue #26](https://github.com/chaunsin/netease-cloud-music/issues/26)
+> 错误，暂不支持。详见 [Issue #26](https://github.com/crossgg/netease-cloud-music/issues/26)
 
 ```shell
 ncmctl login qrcode
