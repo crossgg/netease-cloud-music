@@ -60,6 +60,8 @@ type TaskOpts struct {
 
 	MusicianVip            bool
 	MusicianVipOptsCrontab string
+
+	Once bool // 一次性执行所有任务后退出，不启动 cron 守护
 }
 
 type Task struct {
@@ -114,6 +116,7 @@ func (c *Task) addFlags() {
 
 	c.cmd.PersistentFlags().BoolVar(&c.opts.MusicianVip, "musician-vip", false, "enabled musician VIP task (auto-publish notes + playids)")
 	c.cmd.PersistentFlags().StringVar(&c.opts.MusicianVipOptsCrontab, "musician-vip.cron", "0 12 * * *", "musician-vip crontab expression")
+	c.cmd.PersistentFlags().BoolVar(&c.opts.Once, "once", false, "run all enabled tasks once and exit (no cron daemon)")
 }
 
 func (c *Task) validate() error {
@@ -233,6 +236,58 @@ func (c *Task) execute(ctx context.Context, args []string) error {
 	request := weapi.New(cli)
 	if request.NeedLogin(ctx) {
 		return fmt.Errorf("need login")
+	}
+
+	// --once 模式：直接执行所有启用的任务后退出，不启动 cron 守护
+	if c.opts.Once {
+		var o = c.opts
+		if o.RunAll || (!o.SignIn && !o.Partner && !o.Scrobble && !o.PlayIDs && !o.MusicianVip) {
+			o.SignIn = true
+			o.Partner = true
+			o.Scrobble = true
+		}
+
+		var errs []error
+		if o.SignIn {
+			c.cmd.Println("[sign] 执行...")
+			s := NewSignIn(c.root, c.l)
+			s.opts = c.opts.SignInOpts
+			if err := s.Command().ExecuteContext(ctx); err != nil {
+				errs = append(errs, fmt.Errorf("[sign] %w", err))
+			}
+		}
+		if o.Partner {
+			c.cmd.Println("[partner] 执行...")
+			p := NewPartner(c.root, c.l)
+			p.opts = c.opts.PartnerOpts
+			if err := p.Command().ExecuteContext(ctx); err != nil {
+				errs = append(errs, fmt.Errorf("[partner] %w", err))
+			}
+		}
+		if o.Scrobble {
+			c.cmd.Println("[scrobble] 执行...")
+			s := NewScrobble(c.root, c.l)
+			s.opts = c.opts.ScrobbleOpts
+			if err := s.Command().ExecuteContext(ctx); err != nil {
+				errs = append(errs, fmt.Errorf("[scrobble] %w", err))
+			}
+		}
+		if o.PlayIDs {
+			c.cmd.Println("[playids] 执行...")
+			p := NewPlayIDs(c.root, c.l)
+			p.opts = c.opts.PlayIDsOpts
+			if err := p.Command().ExecuteContext(ctx); err != nil {
+				errs = append(errs, fmt.Errorf("[playids] %w", err))
+			}
+		}
+		if o.MusicianVip {
+			c.cmd.Println("[musician-vip] 执行...")
+			mv := NewMusicianVip(c.root, c.l)
+			if err := mv.Command().ExecuteContext(ctx); err != nil {
+				errs = append(errs, fmt.Errorf("[musician-vip] %w", err))
+			}
+		}
+		return errors.Join(errs...)
 	}
 
 	var (
