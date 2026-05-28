@@ -75,7 +75,7 @@ func NewTask(root *Root, l *log.Logger) *Task {
 		l:    l,
 		cmd: &cobra.Command{
 			Use:     "task",
-			Short:   "[need login] Daily tasks are executed asynchronously [partner、playids、scrobble、sign]",
+			Short:   "[need login] Daily tasks are executed asynchronously [partner、playids、scrobble、sign、musician-vip]",
 			Example: `  ncmctl task`,
 		},
 	}
