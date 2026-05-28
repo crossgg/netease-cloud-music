@@ -44,3 +44,33 @@ database:
   driver: badger
   # 缓存目录
   path: "${HOME}/.ncmctl/database/badger/"
+
+# 音乐人黑胶会员任务配置
+musicianVip:
+  # 笔记发布任务配置
+  note:
+    # 笔记内容（支持多条，随机选择一条）
+    messages:
+      - "分享一首好听的歌~"
+      - "音乐是最好的陪伴"
+      - "今天也要好好听歌呀"
+      - "用音乐记录生活"
+    # 图片URL列表（支持多条，随机选择一张）
+    imageUrls:
+      - "https://picsum.photos/800/600"
+    # 动态类型: 35=普通动态, 39=图文笔记
+    type: 35
+  # 播放任务配置
+  play:
+    # 歌曲ID列表（逗号分隔）
+    ids: ""
+    # 歌曲ID文件路径
+    idsFile: ""
+    # 每次播放数量
+    num: 300
+    # 两首歌之间最小间隔秒数
+    gapMin: 5
+    # 两首歌之间最大间隔秒数
+    gapMax: 20
+    # 非默认cookie文件路径（用于playids任务，留空则使用默认cookie）
+    cookieFile: ""

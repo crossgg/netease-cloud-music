@@ -28,6 +28,7 @@ import (
 	"compress/zlib"
 	"context"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -35,6 +36,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	neturl "net/url"
+	"strings"
 	"time"
 
 	"github.com/chaunsin/netease-cloud-music/pkg/cookie"
@@ -47,10 +49,11 @@ import (
 )
 
 type Config struct {
-	Debug   bool          `json:"debug" yaml:"debug"`
-	Timeout time.Duration `json:"timeout" yaml:"timeout"`
-	Retry   int           `json:"retry" yaml:"retry"`
-	Cookie  cookie.Config `json:"cookie" yaml:"cookie"`
+	Debug     bool          `json:"debug" yaml:"debug"`
+	Timeout   time.Duration `json:"timeout" yaml:"timeout"`
+	Retry     int           `json:"retry" yaml:"retry"`
+	Cookie    cookie.Config `json:"cookie" yaml:"cookie"`
+	UserAgent string        `json:"userAgent" yaml:"userAgent"` // 自定义 User-Agent
 	// Agent   *Agent                     `json:"agent" yaml:"agent"`
 }
 
@@ -209,6 +212,12 @@ func (c *Client) Request(ctx context.Context, url string, req, resp interface{},
 
 	// todo: set User-Agent config
 
+	// 使用自定义 User-Agent 或默认值
+	userAgent := "NeteaseMusic/9.4.85.260330164143(9004085);Dalvik/2.1.0 (Linux; U; Android 16; 23127PN0CC Build/BP2A.250605.031.A3)"
+	if c.cfg.UserAgent != "" {
+		userAgent = c.cfg.UserAgent
+	}
+
 	request := c.cli.R().
 		SetContext(ctx).
 		SetHeader("Host", "music.163.com").
@@ -218,7 +227,7 @@ func (c *Client) Request(ctx context.Context, url string, req, resp interface{},
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").
 		SetHeader("Accept-language", "zh-CN,zh-Hans;q=0.9").
 		SetHeader("Referer", "https://music.163.com").
-		SetHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) NeteaseMusicDesktop/2.3.17.1034").
+		SetHeader("User-Agent", userAgent).
 		SetCookie(&http.Cookie{Name: "__remember_me", Value: "true", Domain: ""})
 	// SetHeader("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.1 Chrome/121.0.0.0 Mobile Safari/537.36")
 
@@ -323,14 +332,27 @@ func (c *Client) Request(ctx context.Context, url string, req, resp interface{},
 		// tips: api接口返回数据是明文
 		decryptData = response.Body()
 	case CryptoModeEAPI:
-		// TODO: 貌似eapi接口返回数据是否是是明文,跟传入参数e_r: true有关,true为加密，false为明文。此处考虑采用反射req中得字段处理。
-		// see: https://gitlab.com/Binaryify/neteasecloudmusicapi/-/commit/58e9865b70e41197c2ab75c46a775fc45d6efa6e
-		// decryptData, err = crypto.EApiDecrypt(string(response.Body()), "")
-		// if err != nil {
-		// 	return nil, fmt.Errorf("EApiDecrypt: %w", err)
-		// }
-		decryptData = response.Body()
-		log.Debug("[response.decrypt]: %s", string(decryptData))
+		// eapi接口返回数据根据e_r参数决定是否加密,true为加密，false为明文。
+		// 如果响应体已经是合法JSON(明文)，直接使用；否则尝试AES-ECB解密
+		// see: https://github.com/neteasecloudmusicapienhanced/api-enhanced/blob/main/util/crypto.js
+		body := response.Body()
+		if len(body) > 0 && (body[0] == '{' || body[0] == '[') {
+			// 响应体已是合法JSON开头，为明文响应
+			decryptData = body
+			log.Debug("[response.eapi-plaintext]: %s", string(decryptData))
+		} else {
+			// 响应体不是JSON开头，可能是加密的，尝试解密
+			hexStr := strings.ToUpper(hex.EncodeToString(body))
+			decrypted, decErr := crypto.EApiDecrypt(hexStr, "hex")
+			if decErr == nil && len(decrypted) > 0 {
+				decryptData = decrypted
+				log.Debug("[response.eapi-decrypt]: %s", string(decryptData))
+			} else {
+				// 解密失败，返回原始数据
+				decryptData = body
+				log.Debug("[response.eapi-raw]: %s", string(decryptData))
+			}
+		}
 	case CryptoModeWEAPI:
 		// tips: weapi接口返回数据是明文
 		decryptData = response.Body()
@@ -361,13 +383,19 @@ func (c *Client) Upload(ctx context.Context, url string, headers map[string]stri
 		body = bar.NewProxyReader(data)
 	}
 
+	// 使用自定义 User-Agent 或默认值
+	userAgent := "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) NeteaseMusicDesktop/2.3.17.1034"
+	if c.cfg.UserAgent != "" {
+		userAgent = c.cfg.UserAgent
+	}
+
 	response, err := c.cli.R().
 		SetContext(ctx).
 		SetHeaders(headers).
 		SetHeader("Connection", "keep-alive").
 		SetHeader("Accept", "*/*").
 		SetHeader("Referer", "https://music.163.com").
-		SetHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) NeteaseMusicDesktop/2.3.17.1034").
+		SetHeader("User-Agent", userAgent).
 		SetBody(body).
 		Post(url)
 	if err != nil {

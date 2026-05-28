@@ -57,6 +57,9 @@ type TaskOpts struct {
 	SignIn            bool
 	SignInOptsCrontab string
 	SignInOpts
+
+	MusicianVip            bool
+	MusicianVipOptsCrontab string
 }
 
 type Task struct {
@@ -108,6 +111,9 @@ func (c *Task) addFlags() {
 	c.cmd.PersistentFlags().BoolVar(&c.opts.SignIn, "sign", false, "enabled sign task")
 	c.cmd.PersistentFlags().StringVar(&c.opts.SignInOptsCrontab, "sign.cron", "0 10 * * *", "sign crontab expression. usage detail: https://crontab.guru")
 	c.cmd.PersistentFlags().BoolVar(&c.opts.Automatic, "sign.automatic", false, "automatically claim sign-in rewards")
+
+	c.cmd.PersistentFlags().BoolVar(&c.opts.MusicianVip, "musician-vip", false, "enabled musician VIP task (auto-publish notes + playids)")
+	c.cmd.PersistentFlags().StringVar(&c.opts.MusicianVipOptsCrontab, "musician-vip.cron", "0 12 * * *", "musician-vip crontab expression")
 }
 
 func (c *Task) validate() error {
@@ -148,13 +154,25 @@ func (c *Task) validate() error {
 			}
 			return nil
 		}
+		musicianVip = func() error {
+			if c.opts.MusicianVipOptsCrontab == "" {
+				return fmt.Errorf("musician-vip.crontab is required")
+			}
+			if _, err := cron.ParseStandard(c.opts.MusicianVipOptsCrontab); err != nil {
+				return fmt.Errorf("ParseStandard: %w", err)
+			}
+			return nil
+		}
 	)
 
 	var o = c.opts
-	if o.RunAll || (!o.SignIn && !o.Partner && !o.Scrobble && !o.PlayIDs) {
+	if o.RunAll || (!o.SignIn && !o.Partner && !o.Scrobble && !o.PlayIDs && !o.MusicianVip) {
 		var err = errors.Join(signIn(), partner(), scrobble())
 		if o.PlayIDs {
 			err = errors.Join(err, playids())
+		}
+		if o.MusicianVip {
+			err = errors.Join(err, musicianVip())
 		}
 		return err
 	} else {
@@ -175,6 +193,11 @@ func (c *Task) validate() error {
 		}
 		if o.PlayIDs {
 			if err := playids(); err != nil {
+				return err
+			}
+		}
+		if o.MusicianVip {
+			if err := musicianVip(); err != nil {
 				return err
 			}
 		}
@@ -310,13 +333,40 @@ func (c *Task) execute(ctx context.Context, args []string) error {
 			log.Info("[sign] next execute: %s", job.Entry(id).Schedule.Next(time.Now()))
 			return nil
 		}
+		musicianVip = func() error {
+			c.cmd.Println("[musician-vip] task register")
+			log.Info("[musician-vip] task register")
+
+			mv := NewMusicianVip(c.root, c.l)
+			mv.cmd.DisableFlagParsing = true
+			if err := mv.validate(); err != nil {
+				return fmt.Errorf("validate: %w", err)
+			}
+
+			id, err := job.AddFunc(c.opts.MusicianVipOptsCrontab, func() {
+				log.Info("[musician-vip] task start")
+				if err := mv.Command().ExecuteContext(ctx); err != nil {
+					log.Error("[musician-vip] execute err: %s", err)
+					return
+				}
+				log.Info("[musician-vip] execute success")
+			})
+			if err != nil {
+				return fmt.Errorf("[musician-vip] crontab error: %v", err)
+			}
+			log.Info("[musician-vip] next execute: %s", job.Entry(id).Schedule.Next(time.Now()))
+			return nil
+		}
 	)
 
 	var o = c.opts
-	if o.RunAll || (!o.SignIn && !o.Partner && !o.Scrobble && !o.PlayIDs) {
+	if o.RunAll || (!o.SignIn && !o.Partner && !o.Scrobble && !o.PlayIDs && !o.MusicianVip) {
 		err := errors.Join(signIn(), partner(), scrobble())
 		if o.PlayIDs {
 			err = errors.Join(err, playids())
+		}
+		if o.MusicianVip {
+			err = errors.Join(err, musicianVip())
 		}
 		if err != nil {
 			return err
@@ -339,6 +389,11 @@ func (c *Task) execute(ctx context.Context, args []string) error {
 		}
 		if o.PlayIDs {
 			if err := playids(); err != nil {
+				return err
+			}
+		}
+		if o.MusicianVip {
+			if err := musicianVip(); err != nil {
 				return err
 			}
 		}

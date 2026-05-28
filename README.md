@@ -175,6 +175,88 @@ ncmctl task --playids --playids.ids 3373818852,3373845775 --playids.num 10 --pla
 - 开启 `--playids` 但没有提供 `playids.ids` 或 `playids.ids-file` 时会直接报错
 - `playids` 仍与 `scrobble` 共享每日 300 首总上限
 
+### `task --musician-vip` 音乐人黑胶会员任务
+
+`musician-vip` 用于自动完成音乐人黑胶会员的进阶任务，包括：
+
+1. **发布图文笔记任务**：自动发布带图片的动态（内容和图片可在 config.yaml 中配置）
+2. **播放任务**：自动调用 `playids` 完成有效播放（可指定非默认 cookie）
+
+命令格式：
+
+```shell
+ncmctl task --musician-vip [--musician-vip.cron "<cron表达式>"]
+```
+
+```shell
+# 每天 12:00 自动执行音乐人任务
+ncmctl task --musician-vip --musician-vip.cron "0 12 * * *"
+
+# 直接执行（不使用 cron）
+ncmctl musician-vip
+```
+
+配置说明（在 `config.yaml` 中）：
+
+```yaml
+musicianVip:
+  # 笔记发布任务配置
+  note:
+    # 笔记内容（支持多条，随机选择一条）
+    messages:
+      - "分享一首好听的歌~"
+      - "音乐是最好的陪伴"
+      - "今天也要好好听歌呀"
+      - "用音乐记录生活"
+    # 图片URL列表（支持多条，随机选择一张）
+    imageUrls:
+      - "https://picsum.photos/800/600"
+    # 动态类型: 35=普通动态, 39=图文笔记
+    type: 35
+  # 播放任务配置
+  play:
+    # 歌曲ID列表（逗号分隔）
+    ids: ""
+    # 歌曲ID文件路径
+    idsFile: ""
+    # 每次播放数量
+    num: 300
+    # 两首歌之间最小间隔秒数
+    gapMin: 5
+    # 两首歌之间最大间隔秒数
+    gapMax: 20
+    # 非默认cookie文件路径（用于playids任务，留空则使用默认cookie）
+    cookieFile: ""
+```
+
+示例配置：
+
+```yaml
+musicianVip:
+  note:
+    messages:
+      - "分享一首好听的歌~"
+      - "音乐是最好的陪伴"
+    imageUrls:
+      - "https://picsum.photos/800/600"
+      - "https://picsum.photos/1024/768"
+    type: 35
+  play:
+    ids: "3373818852,3373845775,3372894655"
+    num: 10
+    gapMin: 5
+    gapMax: 20
+    cookieFile: "/path/to/other/cookie.txt"
+```
+
+注意：
+
+- 需要先登录，且账号必须是音乐人
+- 笔记任务只在"发布图文笔记天数"未达标时自动发布
+- 播放任务只在"有效播放"未达标时自动执行
+- 如果配置了 `cookieFile`，播放任务会使用指定的 cookie 文件
+- 可与 `--playids` 等其他任务同时使用
+
 ### Docker 用法
 
 当前仓库建议直接使用 GitHub Container Registry 镜像：
@@ -251,6 +333,7 @@ docker run --rm -it \
       月 [公告](https://music.163.com/#/event?id=30336457500&uid=7872690377) | [规则](https://y.music.163.com/g/yida/9fecf6a378be49a7a109ae9befb1b8d3)
 - [x] 🎧 每日刷歌 300 首（支持去重功能）
 - [x] 💎 VIP 每日签到
+- [x] 🎵 音乐人黑胶会员任务（自动发布笔记 + 自动播放）
 
 #### ☁️ 云盘功能
 
@@ -277,8 +360,6 @@ docker run --rm -it \
 
 #### 🔜 计划中
 
-- [ ] VIP 日常任务完成（待考虑）
-- [ ] "音乐人"任务自动完成（待考虑）
 - [ ] 🌐 Proxy 代理支持
 
 ### 📦 API 接口

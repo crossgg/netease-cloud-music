@@ -39,11 +39,46 @@ func init() {
 }
 
 type Config struct {
-	v        *viper.Viper
-	Version  string           `json:"version" yaml:"version"`
-	Log      *log.Config      `json:"log" yaml:"log"`
-	Network  *api.Config      `json:"network" yaml:"network"`
-	Database *database.Config `json:"database" yaml:"database"`
+	v           *viper.Viper
+	Version     string           `json:"version" yaml:"version"`
+	Log         *log.Config      `json:"log" yaml:"log"`
+	Network     *api.Config      `json:"network" yaml:"network"`
+	Database    *database.Config `json:"database" yaml:"database"`
+	MusicianVip *MusicianVipConf `json:"musicianVip" yaml:"musicianVip"`
+}
+
+// MusicianVipConf 音乐人黑胶会员任务配置
+type MusicianVipConf struct {
+	// 笔记任务配置 - 发布图文笔记天数
+	Note MusicianVipNoteConf `json:"note" yaml:"note"`
+	// 播放任务配置 - 近30天有效播放次数
+	Play MusicianVipPlayConf `json:"play" yaml:"play"`
+}
+
+// MusicianVipNoteConf 笔记发布任务配置
+type MusicianVipNoteConf struct {
+	// 笔记内容（支持多条，随机选择）
+	Messages []string `json:"messages" yaml:"messages"`
+	// 图片URL列表（支持多条，随机选择）
+	ImageURLs []string `json:"imageUrls" yaml:"imageUrls"`
+	// 动态类型: 35=普通动态
+	Type int `json:"type" yaml:"type"`
+}
+
+// MusicianVipPlayConf 播放任务配置
+type MusicianVipPlayConf struct {
+	// 歌曲ID列表
+	IDs string `json:"ids" yaml:"ids"`
+	// 歌曲ID文件路径
+	IDsFile string `json:"idsFile" yaml:"idsFile"`
+	// 每次播放数量
+	Num int64 `json:"num" yaml:"num"`
+	// 两首歌之间最小间隔秒数
+	GapMin int64 `json:"gapMin" yaml:"gapMin"`
+	// 两首歌之间最大间隔秒数
+	GapMax int64 `json:"gapMax" yaml:"gapMax"`
+	// 非默认cookie文件路径（用于playids任务）
+	CookieFile string `json:"cookieFile" yaml:"cookieFile"`
 }
 
 func (c *Config) Validate() error {
