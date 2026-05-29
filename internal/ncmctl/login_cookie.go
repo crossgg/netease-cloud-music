@@ -113,6 +113,7 @@ type loginCookieCmd struct {
 
 	File   string
 	format string
+	Output string
 }
 
 func cookie(root *Login, l *log.Logger) *cobra.Command {
@@ -136,6 +137,7 @@ func cookie(root *Login, l *log.Logger) *cobra.Command {
 func (c *loginCookieCmd) addFlags() {
 	c.cmd.Flags().StringVarP(&c.File, "file", "f", "", "import cookie file")
 	c.cmd.Flags().StringVar(&c.format, "format", "", "import cookie file format. eg: ''、json、netscaple、header")
+	c.cmd.Flags().StringVarP(&c.Output, "output", "o", "", "output cookie file path (default: config network.cookie.filepath)")
 }
 
 func (c *loginCookieCmd) execute(ctx context.Context, args []string) error {
@@ -281,6 +283,14 @@ func (c *loginCookieCmd) execute(ctx context.Context, args []string) error {
 		return fmt.Errorf("failed to parse domain URL: %v", err)
 	}
 
+	// 如果指定了输出路径，临时切换 cookie 文件路径
+	if c.Output != "" {
+		origPath := c.root.root.Cfg.Network.Cookie.Filepath
+		c.root.root.Cfg.Network.Cookie.Filepath = c.Output
+		defer func() { c.root.root.Cfg.Network.Cookie.Filepath = origPath }()
+		log.Debug("login cookie output: %s", c.Output)
+	}
+
 	cli, err := api.NewClient(c.root.root.Cfg.Network, c.l)
 	if err != nil {
 		return fmt.Errorf("NewClient: %w", err)
@@ -295,6 +305,6 @@ func (c *loginCookieCmd) execute(ctx context.Context, args []string) error {
 	if err != nil {
 		return fmt.Errorf("GetUserInfo: %s", err)
 	}
-	c.cmd.Printf("login success: %+v\n", user)
+	c.cmd.Printf("login success: uid=%d nickname=%s\n", user.Account.Id, user.Profile.Nickname)
 	return nil
 }

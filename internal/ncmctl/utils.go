@@ -34,8 +34,10 @@ import (
 	"strconv"
 	"strings"
 
+	"codeberg.org/sbinet/mozcookie"
 	"github.com/chaunsin/netease-cloud-music/api/types"
 	"github.com/chaunsin/netease-cloud-music/pkg/cookiecloud"
+	"github.com/chaunsin/netease-cloud-music/pkg/log"
 	"github.com/chaunsin/netease-cloud-music/pkg/utils"
 
 	"github.com/spf13/cobra"
@@ -192,4 +194,42 @@ func (m Music) String() string {
 		format  = fmt.Sprintf("%02d:%02d:%02d", hours, minutes, secs)
 	)
 	return fmt.Sprintf("%s-%s(%v) [%s]", m.ArtistString(), m.Name, m.Id, format)
+}
+
+// parseCookieFile 自动探测格式解析 cookie 文件（Netscape / JSON / Header）
+// 与 login cookie 命令使用相同的解析逻辑
+func parseCookieFile(path string) ([]*http.Cookie, error) {
+	// 尝试 Netscape 格式（mozcookie）
+	cookies, err := mozcookie.Read(path)
+	if err != nil {
+		log.Debug("parseCookieFile netscape err: %s", err)
+	}
+	if len(cookies) > 0 {
+		return cookies, nil
+	}
+
+	// 尝试 JSON 格式
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("open: %w", err)
+	}
+	defer f.Close()
+	cookies, err = ParseCookeJson(f)
+	if err != nil {
+		log.Debug("parseCookieFile json err: %s", err)
+	}
+	if len(cookies) > 0 {
+		return cookies, nil
+	}
+
+	// 尝试 Header 格式（原始字符串: key=val; key2=val2）
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read: %w", err)
+	}
+	cookies, err = http.ParseCookie(string(data))
+	if err != nil {
+		return nil, fmt.Errorf("ParseCookie: %w", err)
+	}
+	return cookies, nil
 }

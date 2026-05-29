@@ -155,19 +155,18 @@ func (c *PlayIDs) execute(ctx context.Context) error {
 	}
 	defer cli.Close(ctx)
 
-	// 如果指定了额外的 cookie 文件，解析原始格式并注入（会同名覆盖默认cookie）
+	// 如果指定了额外的 cookie 文件，用 login cookie 同款解析逻辑注入
 	if c.opts.CookieFile != "" {
 		absPath, err := filepath.Abs(c.opts.CookieFile)
 		if err != nil {
 			return fmt.Errorf("解析cookie文件路径失败: %w", err)
 		}
-		cookieData, err := os.ReadFile(absPath)
+		cookies, err := parseCookieFile(absPath)
 		if err != nil {
-			return fmt.Errorf("读取cookie文件失败: %w", err)
+			return fmt.Errorf("解析cookie文件失败: %w", err)
 		}
-		cookies := parseCookieString(string(cookieData))
 		if len(cookies) == 0 {
-			return fmt.Errorf("cookie文件为空或格式不正确: %s", absPath)
+			return fmt.Errorf("cookie文件为空: %s", absPath)
 		}
 		url := &neturl.URL{Scheme: "https", Host: "music.163.com"}
 		cli.SetCookies(url, cookies)
