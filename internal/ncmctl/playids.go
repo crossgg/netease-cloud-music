@@ -29,7 +29,6 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	neturl "net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -39,6 +38,7 @@ import (
 	"github.com/chaunsin/netease-cloud-music/api"
 	"github.com/chaunsin/netease-cloud-music/api/types"
 	"github.com/chaunsin/netease-cloud-music/api/weapi"
+	cookiejar "github.com/chaunsin/netease-cloud-music/pkg/cookie"
 	"github.com/chaunsin/netease-cloud-music/pkg/database"
 	"github.com/chaunsin/netease-cloud-music/pkg/log"
 	"github.com/chaunsin/netease-cloud-music/pkg/utils"
@@ -148,30 +148,28 @@ func (c *PlayIDs) execute(ctx context.Context) error {
 		return fmt.Errorf("parsePlaySongIDs: %w", err)
 	}
 
-	// 创建 client
-	cli, err := api.NewClient(c.root.Cfg.Network, c.l)
-	if err != nil {
-		return fmt.Errorf("NewClient: %w", err)
-	}
-	defer cli.Close(ctx)
-
-	// 如果指定了额外的 cookie 文件，用 login cookie 同款解析逻辑注入
+	// 创建 client（如果指定了 CookieFile，使用独立的 cookie 文件路径避免覆盖主 cookie）
+	networkCfg := c.root.Cfg.Network
 	if c.opts.CookieFile != "" {
 		absPath, err := filepath.Abs(c.opts.CookieFile)
 		if err != nil {
 			return fmt.Errorf("解析cookie文件路径失败: %w", err)
 		}
-		cookies, err := parseCookieFile(absPath)
-		if err != nil {
-			return fmt.Errorf("解析cookie文件失败: %w", err)
+		// 复制配置，修改 cookie filepath 指向指定文件
+		networkCfgCopy := *networkCfg
+		networkCfgCopy.Cookie = cookiejar.Config{
+			Filepath: absPath,
+			Interval: networkCfg.Cookie.Interval,
 		}
-		if len(cookies) == 0 {
-			return fmt.Errorf("cookie文件为空: %s", absPath)
-		}
-		url := &neturl.URL{Scheme: "https", Host: "music.163.com"}
-		cli.SetCookies(url, cookies)
-		log.Info("[playids] 使用指定cookie文件: %s (%d条cookie)", absPath, len(cookies))
+		networkCfg = &networkCfgCopy
+		log.Info("[playids] 使用独立cookie文件: %s", absPath)
+		c.cmd.Printf("[musician-vip] 使用指定cookie文件: %s\\n", absPath)
 	}
+	cli, err := api.NewClient(networkCfg, c.l)
+	if err != nil {
+		return fmt.Errorf("NewClient: %w", err)
+	}
+	defer cli.Close(ctx)
 
 	request := weapi.New(cli)
 
