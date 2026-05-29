@@ -29,7 +29,6 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	neturl "net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -148,29 +147,23 @@ func (c *PlayIDs) execute(ctx context.Context) error {
 		return fmt.Errorf("parsePlaySongIDs: %w", err)
 	}
 
-	cli, err := api.NewClient(c.root.Cfg.Network, c.l)
-	if err != nil {
-		return fmt.Errorf("NewClient: %w", err)
-	}
-	defer cli.Close(ctx)
-
-	// 如果指定了额外的 cookie 文件，解析并注入到 client
+	// 如果指定了额外的 cookie 文件，临时切换 cookie 路径让 client 直接加载
 	if c.opts.CookieFile != "" {
 		absPath, err := filepath.Abs(c.opts.CookieFile)
 		if err != nil {
 			return fmt.Errorf("解析cookie文件路径失败: %w", err)
 		}
-		cookieData, err := os.ReadFile(absPath)
-		if err != nil {
-			return fmt.Errorf("读取cookie文件失败: %w", err)
-		}
-		cookies := parseCookieString(string(cookieData))
-		if len(cookies) > 0 {
-			url := &neturl.URL{Scheme: "https", Host: "music.163.com"}
-			cli.SetCookies(url, cookies)
-			log.Info("[playids] 已加载额外cookie: %s (%d个cookie)", absPath, len(cookies))
-		}
+		origPath := c.root.Cfg.Network.Cookie.Filepath
+		c.root.Cfg.Network.Cookie.Filepath = absPath
+		defer func() { c.root.Cfg.Network.Cookie.Filepath = origPath }()
+		log.Info("[playids] 使用指定cookie文件: %s", absPath)
 	}
+
+	cli, err := api.NewClient(c.root.Cfg.Network, c.l)
+	if err != nil {
+		return fmt.Errorf("NewClient: %w", err)
+	}
+	defer cli.Close(ctx)
 
 	request := weapi.New(cli)
 
