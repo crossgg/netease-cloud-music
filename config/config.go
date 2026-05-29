@@ -92,8 +92,8 @@ func GetDefault() *Config {
 func New(cfgPath ...string) (*Config, error) {
 	var (
 		conf Config
-		opts = viper.DecodeHook(func(m *mapstructure.DecoderConfig) {
-			m.TagName = "yaml"
+		opts = viper.DecoderConfigOption(func(c *mapstructure.DecoderConfig) {
+			c.TagName = "yaml"
 		})
 		_cfgPath string
 	)

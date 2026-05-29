@@ -60,6 +60,8 @@ type TaskOpts struct {
 
 	MusicianVip            bool
 	MusicianVipOptsCrontab string
+
+	Once bool // 一次性执行所有任务后退出，不启动 cron 守护
 }
 
 type Task struct {
@@ -114,6 +116,7 @@ func (c *Task) addFlags() {
 
 	c.cmd.PersistentFlags().BoolVar(&c.opts.MusicianVip, "musician-vip", false, "enabled musician VIP task (auto-publish notes + playids)")
 	c.cmd.PersistentFlags().StringVar(&c.opts.MusicianVipOptsCrontab, "musician-vip.cron", "0 12 * * *", "musician-vip crontab expression")
+	c.cmd.PersistentFlags().BoolVar(&c.opts.Once, "once", false, "run all enabled tasks once and exit (no cron daemon)")
 }
 
 func (c *Task) validate() error {
@@ -235,17 +238,8 @@ func (c *Task) execute(ctx context.Context, args []string) error {
 		return fmt.Errorf("need login")
 	}
 
-	// 判断是一次性执行还是 cron 守护模式
-	// 规则：如果用户显式指定了任务但没有指定任何 .cron 参数，则一次性执行
-	// 否则进入 cron 守护模式
-	var hasExplicitTask = c.opts.SignIn || c.opts.Partner || c.opts.Scrobble || c.opts.PlayIDs || c.opts.MusicianVip
-	var hasCustomCron = c.opts.SignInOptsCrontab != "0 10 * * *" && c.opts.SignInOptsCrontab != "0 18 * * *" &&
-		c.opts.PartnerOptsCrontab != "0 18 * * *" && c.opts.ScrobbleOptsCrontab != "0 18 * * *" &&
-		c.opts.PlayIDsOptsCrontab != "0 19 * * *" && c.opts.MusicianVipOptsCrontab != "0 12 * * *"
-	var once = hasExplicitTask && !hasCustomCron
-
-	if once {
-		// 一次性执行模式：直接执行所有启用的任务后退出
+	// --once 模式：直接执行所有启用的任务后退出，不启动 cron 守护
+	if c.opts.Once {
 		var o = c.opts
 		if o.RunAll || (!o.SignIn && !o.Partner && !o.Scrobble && !o.PlayIDs && !o.MusicianVip) {
 			o.SignIn = true
