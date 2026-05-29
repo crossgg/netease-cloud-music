@@ -76,8 +76,19 @@ func New() *Root {
 				return fmt.Errorf("init config error: %s", err)
 			}
 		} else {
-			cfgPath = "default"
-			c.Cfg = config.GetDefault()
+			// 尝试从 home 目录加载 config.yaml，不存在则使用默认配置
+			autoCfgPath := filepath.Join(home, "config.yaml")
+			if utils.FileExists(autoCfgPath) {
+				var err error
+				cfgPath = autoCfgPath
+				c.Cfg, err = config.New(autoCfgPath)
+				if err != nil {
+					return fmt.Errorf("init config error: %s", err)
+				}
+			} else {
+				cfgPath = "default"
+				c.Cfg = config.GetDefault()
+			}
 		}
 
 		c.Cfg.ReplaceMagicVariables("HOME", home)
