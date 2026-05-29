@@ -29,7 +29,9 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	neturl "net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -52,11 +54,12 @@ const (
 )
 
 type PlayIDsOpts struct {
-	IDs     string
-	IDsFile string
-	Num     int64
-	GapMin  int64
-	GapMax  int64
+	IDs        string
+	IDsFile    string
+	Num        int64
+	GapMin     int64
+	GapMax     int64
+	CookieFile string // 额外 cookie 文件路径（原始格式），加载后注入到 client
 }
 
 type PlayIDs struct {
@@ -150,6 +153,25 @@ func (c *PlayIDs) execute(ctx context.Context) error {
 		return fmt.Errorf("NewClient: %w", err)
 	}
 	defer cli.Close(ctx)
+
+	// 如果指定了额外的 cookie 文件，解析并注入到 client
+	if c.opts.CookieFile != "" {
+		absPath, err := filepath.Abs(c.opts.CookieFile)
+		if err != nil {
+			return fmt.Errorf("解析cookie文件路径失败: %w", err)
+		}
+		cookieData, err := os.ReadFile(absPath)
+		if err != nil {
+			return fmt.Errorf("读取cookie文件失败: %w", err)
+		}
+		cookies := parseCookieString(string(cookieData))
+		if len(cookies) > 0 {
+			url := &neturl.URL{Scheme: "https", Host: "music.163.com"}
+			cli.SetCookies(url, cookies)
+			log.Info("[playids] 已加载额外cookie: %s (%d个cookie)", absPath, len(cookies))
+		}
+	}
+
 	request := weapi.New(cli)
 
 	if request.NeedLogin(ctx) {

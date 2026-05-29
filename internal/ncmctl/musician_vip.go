@@ -30,6 +30,7 @@ import (
 	"net/http"
 	neturl "net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -149,7 +150,7 @@ func (c *MusicianVip) execute(ctx context.Context) error {
 
 		case "mission_code_recently_play_count":
 			// 播放任务：服务端子任务 progressRate 可能不准确，使用 recentPlayCount30 作为实际播放数
-			if err := c.handlePlayTask(ctx, sub, resp.Data.RecentPlayCount30); err != nil {
+			if err := c.handlePlayTask(ctx, cli, sub, resp.Data.RecentPlayCount30); err != nil {
 				log.Error("[musician-vip] 播放任务执行失败: %s", err)
 				c.cmd.Printf("[musician-vip] ❌ 播放任务失败: %s\\n", err)
 			}
@@ -227,7 +228,7 @@ func (c *MusicianVip) handleNoteTask(ctx context.Context, cli *api.Client, eapiC
 }
 
 // handlePlayTask 处理播放任务
-func (c *MusicianVip) handlePlayTask(ctx context.Context, sub eapi.MusicianVipSubTask, recentPlayCount30 int) error {
+func (c *MusicianVip) handlePlayTask(ctx context.Context, cli *api.Client, sub eapi.MusicianVipSubTask, recentPlayCount30 int) error {
 	c.cmd.Println("[musician-vip] 处理播放任务...")
 
 	cfg := c.root.Cfg.MusicianVip.Play
@@ -264,12 +265,13 @@ func (c *MusicianVip) handlePlayTask(ctx context.Context, sub eapi.MusicianVipSu
 		args = append(args, "--gap-max", fmt.Sprintf("%d", cfg.GapMax))
 	}
 
-	// 如果指定了非默认cookie文件，临时切换cookie路径（PlayIDs会通过 c.root.Cfg.Network 读取）
+	// 如果指定了非默认cookie文件，传递给 PlayIDs 让它自行加载
 	if cfg.CookieFile != "" {
-		c.cmd.Printf("[musician-vip] 使用指定cookie文件: %s\n", cfg.CookieFile)
-		origPath := c.root.Cfg.Network.Cookie.Filepath
-		c.root.Cfg.Network.Cookie.Filepath = cfg.CookieFile
-		defer func() { c.root.Cfg.Network.Cookie.Filepath = origPath }()
+		absPath, err := filepath.Abs(cfg.CookieFile)
+		if err != nil {
+			return fmt.Errorf("解析cookie文件路径失败: %w", err)
+		}
+		c.cmd.Printf("[musician-vip] 使用指定cookie文件: %s\n", absPath)
 	}
 
 	c.cmd.Printf("[musician-vip] 启动playids: %v\n", args)
@@ -298,6 +300,7 @@ func (c *MusicianVip) handlePlayTask(ctx context.Context, sub eapi.MusicianVipSu
 			}
 			return 20
 		}(),
+		CookieFile: cfg.CookieFile,
 	}
 
 	if err := p.validate(); err != nil {

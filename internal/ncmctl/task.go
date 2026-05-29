@@ -61,7 +61,7 @@ type TaskOpts struct {
 	MusicianVip            bool
 	MusicianVipOptsCrontab string
 
-	Once bool // 一次性执行所有任务后退出，不启动 cron 守护
+	Daemon bool // 启动 cron 守护模式，默认一次性执行后退出
 }
 
 type Task struct {
@@ -116,7 +116,7 @@ func (c *Task) addFlags() {
 
 	c.cmd.PersistentFlags().BoolVar(&c.opts.MusicianVip, "musician-vip", false, "enabled musician VIP task (auto-publish notes + playids)")
 	c.cmd.PersistentFlags().StringVar(&c.opts.MusicianVipOptsCrontab, "musician-vip.cron", "0 12 * * *", "musician-vip crontab expression")
-	c.cmd.PersistentFlags().BoolVar(&c.opts.Once, "once", false, "run all enabled tasks once and exit (no cron daemon)")
+	c.cmd.PersistentFlags().BoolVar(&c.opts.Daemon, "cron", false, "run in cron daemon mode (default: one-shot execution)")
 }
 
 func (c *Task) validate() error {
@@ -238,8 +238,8 @@ func (c *Task) execute(ctx context.Context, args []string) error {
 		return fmt.Errorf("need login")
 	}
 
-	// --once 模式：直接执行所有启用的任务后退出，不启动 cron 守护
-	if c.opts.Once {
+	// 默认一次性执行所有任务后退出，--cron 模式启动 cron 守护
+	if !c.opts.Daemon {
 		var o = c.opts
 		if o.RunAll || (!o.SignIn && !o.Partner && !o.Scrobble && !o.PlayIDs && !o.MusicianVip) {
 			o.SignIn = true
