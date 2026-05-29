@@ -213,8 +213,8 @@ func parseCookieFile(path string) ([]*http.Cookie, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open: %w", err)
 	}
-	defer f.Close()
 	cookies, err = ParseCookeJson(f)
+	f.Close()
 	if err != nil {
 		log.Debug("parseCookieFile json err: %s", err)
 	}
@@ -222,14 +222,44 @@ func parseCookieFile(path string) ([]*http.Cookie, error) {
 		return cookies, nil
 	}
 
-	// 尝试 Header 格式（原始字符串: key=val; key2=val2）
+	// 尝试 Header 格式（http.ParseCookie 严格模式）
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("read: %w", err)
 	}
 	cookies, err = http.ParseCookie(string(data))
 	if err != nil {
-		return nil, fmt.Errorf("ParseCookie: %w", err)
+		log.Debug("parseCookieFile http.ParseCookie err: %s", err)
 	}
-	return cookies, nil
+	if len(cookies) > 0 {
+		return cookies, nil
+	}
+
+	// fallback: 宽容模式手动解析（处理含 URL 编码等非标准字符的 cookie）
+	cookies = parseCookieStringFallback(string(data))
+	if len(cookies) > 0 {
+		log.Debug("parseCookieFile fallback: parsed %d cookies", len(cookies))
+		return cookies, nil
+	}
+
+	return nil, fmt.Errorf("无法解析cookie文件: %s", path)
+}
+
+func parseCookieStringFallback(s string) []*http.Cookie {
+	var cookies []*http.Cookie
+	for _, part := range strings.Split(s, ";") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		kv := strings.SplitN(part, "=", 2)
+		if len(kv) != 2 {
+			continue
+		}
+		cookies = append(cookies, &http.Cookie{
+			Name:  strings.TrimSpace(kv[0]),
+			Value: strings.TrimSpace(kv[1]),
+		})
+	}
+	return cookies
 }

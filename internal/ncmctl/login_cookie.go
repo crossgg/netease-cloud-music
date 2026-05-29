@@ -190,35 +190,12 @@ func (c *loginCookieCmd) execute(ctx context.Context, args []string) error {
 			}
 			cookies = ck
 		default:
-			// 走探测逻辑
-			ck, err := mozcookie.Read(c.File)
+			// 走探测逻辑（Netscape → JSON → Header → 宽容模式）
+			ck, err := parseCookieFile(c.File)
 			if err != nil {
-				log.Debug("retry read netscape err: %s", err)
+				return fmt.Errorf("parseCookieFile: %w", err)
 			}
 			cookies = ck
-			if len(cookies) <= 0 {
-				f, err := os.Open(c.File)
-				if err != nil {
-					return fmt.Errorf("open: %w", err)
-				}
-				defer f.Close()
-
-				cookies, err = ParseCookeJson(f)
-				if err != nil {
-					log.Debug("retry parse json err: %s", err)
-				}
-			}
-			if len(cookies) <= 0 {
-				data, err := os.ReadFile(c.File)
-				if err != nil {
-					return fmt.Errorf("open: %w", err)
-				}
-
-				cookies, err = http.ParseCookie(string(data))
-				if err != nil {
-					return fmt.Errorf("ParseCookie: %w", err)
-				}
-			}
 		}
 	} else {
 		var binary = strings.NewReader(content)
