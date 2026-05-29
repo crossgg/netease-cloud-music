@@ -63,6 +63,13 @@ test-run/
 
 `playids`、`task --playids`、`task --musician-vip`、`sign`、`scrobble` 这类命令都需要先登录。
 
+`sign` 命令执行流程：
+
+1. **音乐人签到**（`/api/creator/user/access`）— 完成"登录音乐人中心"任务
+2. **领取云豆**（`/api/nmusician/workbench/mission/reward/obtain/new`）— 获取任务列表，自动领取已完成任务的云豆奖励
+3. **云贝签到**（`/yunbei/sign`）
+4. **VIP 乐签** + **成长值领取**（`--sign.automatic` 时自动领取所有可领成长值）
+
 最常用的是 Cookie 登录：
 
 ```shell
@@ -523,7 +530,7 @@ ncmctl task
 
 |     任务     | 说明            |
 |:----------:|:--------------|
-|   `sign`   | 云贝签到 + VIP 签到 |
+|   `sign`   | 音乐人签到 + 领取云豆 + 云贝签到 + VIP 签到 |
 | `partner`  | 音乐合伙人         |
 | `scrobble` | 刷歌 300 首      |
 
