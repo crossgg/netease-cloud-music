@@ -1,0 +1,45 @@
+# 配置文件版本
+version: 1.0
+# log 日志模块配置
+log:
+  app: ncm
+  format: text
+  level: info
+  stdout: true
+  rotate:
+    filename: "./log/ncm.log"
+    maxsize: 100
+    maxage: 7
+    maxbackups: 3
+    localtime: true
+    compress: true
+# 网络模块配置
+network:
+  debug: false
+  timeout: 120s
+  retry: 3
+  cookie:
+    filepath: "./cookie.json"
+    interval: 3s
+# 数据缓存配置
+database:
+  driver: badger
+  path: "./database/badger/"
+# 音乐人黑胶会员任务配置
+musicianVip:
+  note:
+    messages:
+      - "分享一首好听的歌~"
+      - "音乐是最好的陪伴"
+      - "今天也要好好听歌呀"
+      - "用音乐记录生活"
+    imageUrls:
+      - "https://picsum.photos/800/600"
+    type: 39
+  play:
+    ids: "3366663042,3366909227,3367688879"
+    idsFile: ""
+    num: 20
+    gapMin: 1
+    gapMax: 15
+    cookieFile: "./cookie2.json"
