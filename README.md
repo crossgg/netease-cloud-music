@@ -167,14 +167,54 @@ ncmctl --home . task --musician-vip --musician-vip.cron "0 12 * * *"
 
 > **注意：** 不加 `--cron` 参数时为一次性执行，执行完退出。加 `--cron` 才进入守护模式。
 
-任务执行流程：
+任务运行逻辑：
 
-1. 加载主账号 cookie（`config.yaml` 中 `network.cookie.filepath`），检查音乐人身份
-2. 查询进阶任务状态（笔记任务 + 播放任务）
-3. 笔记任务：如未达标，自动发布一条图文笔记
-4. 播放任务：如未达标，创建**独立 client** 加载 `musicianVip.play.cookieFile` 中指定的 cookie，调用 `playids` 完成播放
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                    task --musician-vip                       │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. 加载主账号 cookie (network.cookie.filepath)              │
+│     └─ 创建 client，加载 cookie.json                         │
+│                                                             │
+│  2. 调用 MusicianVipTasks API 查询任务状态                    │
+│     ├─ 校验 IsMusician → 非音乐人则报错退出                    │
+│     ├─ 输出: 维持天数 / 近30天播放次数 / VIP权益状态             │
+│     └─ 获取 FurtherTask 进阶任务列表                          │
+│                                                             │
+│  3. 无进阶任务 → 输出提示，正常退出                             │
+│                                                             │
+│  4. 遍历子任务列表，逐个检查并执行：                            │
+│     │                                                       │
+│     ├─ MissionStatus == 100 → 已完成，跳过                    │
+│     │                                                       │
+│     ├─ mission_code_musician_notebook_publish (笔记任务)      │
+│     │   ├─ 检查进度: progressRate >= totalCompleteNum → 跳过  │
+│     │   ├─ 从 config 中随机选取一条文案                       │
+│     │   ├─ 从 config 中随机选取一张图片URL                    │
+│     │   ├─ 下载图片到临时文件                                 │
+│     │   ├─ 调用 EventUploadImage 上传图片                     │
+│     │   └─ 调用 EventPublish 发布图文动态                     │
+│     │                                                       │
+│     └─ mission_code_recently_play_count (播放任务)            │
+│         ├─ 使用 recentPlayCount30 作为实际进度（非 progressRate）│
+│         ├─ 检查进度: recentPlayCount30 >= totalCompleteNum    │
+│         │   └─ 已达标 → 跳过                                 │
+│         ├─ 检查 config 中是否配置了歌曲ID                      │
+│         ├─ 创建独立 client（cookie filepath → cookieFile）     │
+│         └─ 调用 playids 完成播放（每首完整播放后上报）           │
+│                                                             │
+│  5. 全部子任务处理完毕，退出                                   │
+└─────────────────────────────────────────────────────────────┘
+```
 
-> **cookie 隔离：** 播放任务使用独立的 cookie 文件，不会覆盖主账号的 cookie.json。两个 client 各自独立加载和持久化自己的 cookie。
+关键细节：
+
+- **进度判断**：播放任务使用 `recentPlayCount30`（近30天实际播放数）而非服务端的 `progressRate`（可能不准确）
+- **cookie 隔离**：播放任务创建独立 client，cookie 加载和持久化指向 `musicianVip.play.cookieFile`，不污染主账号 cookie.json
+- **任务状态码**：`MissionStatus == 100` 表示已完成，其他值表示进行中或未开始
+- **笔记发布**：文案和图片都支持配置多条，每次执行随机选择
+- **播放流程**：`playids` 每首歌拉流 → 补等待到完整时长 → 上报 WebLog → 间隔等待 → 下一首
 
 配置说明（在 `config.yaml` 中）：
 
