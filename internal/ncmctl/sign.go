@@ -95,7 +95,51 @@ func (c *SignIn) execute(ctx context.Context) error {
 		return fmt.Errorf("need login")
 	}
 
+	// 音乐人签到 + 领取云豆
+	c.cmd.Println("--- 音乐人任务 ---")
+	signResp, err := request.MusicianSign(ctx, &weapi.MusicianSignReq{})
+	if err != nil {
+		log.Warn("MusicianSign: %s", err)
+	} else if signResp.Code == 200 {
+		c.cmd.Println("音乐人签到成功")
+	} else {
+		c.cmd.Printf("音乐人签到: code=%d msg=%s\n", signResp.Code, signResp.Message)
+	}
+
+	// 获取音乐人任务列表
+	tasks, err := request.MusicianTasks(ctx, &weapi.MusicianTasksReq{})
+	if err != nil {
+		c.cmd.Printf("  获取音乐人任务失败: %s\n", err)
+	} else if tasks.Code != 200 {
+		c.cmd.Printf("  获取音乐人任务: code=%d msg=%s\n", tasks.Code, tasks.Message)
+	} else if len(tasks.Data.TaskList) == 0 {
+		c.cmd.Println("  暂无音乐人任务")
+	} else {
+		var claimCount int
+		for _, task := range tasks.Data.TaskList {
+			c.cmd.Printf("  任务: %s | 状态: %d | 进度: %d/%d\n",
+				task.Name, task.Status, task.CurrentProgress, task.TargetWorth)
+			if task.Status == 2 || (task.UserMissionId > 0 && task.CurrentProgress >= task.TargetWorth && task.TargetWorth > 0) {
+				id := fmt.Sprintf("%d", task.UserMissionId)
+				period := fmt.Sprintf("%d", task.Period)
+				reward, err := request.MusicianCloudbeanObtain(ctx, &weapi.MusicianCloudbeanObtainReq{Id: id, Period: period})
+				if err != nil {
+					c.cmd.Printf("  ❌ 领取云豆失败: %s err=%s\n", task.Name, err)
+				} else if reward.Code == 200 {
+					c.cmd.Printf("  ✅ 领取云豆成功: %s (id=%s)\n", task.Name, id)
+					claimCount++
+				} else {
+					c.cmd.Printf("  ❌ 领取云豆失败: %s code=%d msg=%s\n", task.Name, reward.Code, reward.Message)
+				}
+			}
+		}
+		if claimCount > 0 {
+			c.cmd.Printf("共领取 %d 个任务的云豆\n", claimCount)
+		}
+	}
+
 	// 执行云贝签到
+	c.cmd.Println("--- 云贝任务 ---")
 	resp, err := request.YunBeiSignIn(ctx, &weapi.YunBeiSignInReq{})
 	if err != nil {
 		return fmt.Errorf("YunBeiSignIn: %w", err)
@@ -161,6 +205,7 @@ func (c *SignIn) execute(ctx context.Context) error {
 	}
 
 	// 查询vip权益
+	c.cmd.Println("--- VIP 任务 ---")
 	vip, err := request.VipGrowPoint(ctx, &weapi.VipGrowPointReq{})
 	if err != nil {
 		return fmt.Errorf("VipGrowPoint: %w", err)
