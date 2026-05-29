@@ -27,13 +27,41 @@
 
 # 🎵 netease-cloud-music
 
-> 🎖 本项目基于开源项目 [netease-cloud-music](https://github.com/crossgg/netease-cloud-music) 完成二次开发与功能拓展，谨向原作者及开源社区致以诚挚谢意。
+> 🎖 本项目基于开源项目 [netease-cloud-music](https://github.com/3899/netease-cloud-music) 完成二次开发与功能拓展，谨向原作者及开源社区致以诚挚谢意。
 
 ## 本次新增功能说明
 
+### 运行目录与配置
+
+#### `--home` 指定运行目录
+
+`--home` 参数可以让 ncmctl 在指定目录下运行，自动加载该目录下的 `config.yaml` 和 cookie 文件，无需设置环境变量或复制到默认目录。
+
+```shell
+# 在 test-run 目录下运行（自动加载 test-run/config.yaml）
+ncmctl --home ./test-run task --musician-vip
+
+# 等价于手动设置环境变量
+NCMCTL_HOME=./test-run ncmctl task --musician-vip
+```
+
+工作原理：当指定 `--home` 目录且该目录下存在 `config.yaml` 时，ncmctl 会自动将其作为配置文件加载，cookie 文件路径也会基于该目录解析。
+
+#### 推荐目录结构
+
+```
+test-run/
+├── config.yaml       # 配置文件（任务参数、cookie路径等）
+├── cookie.json       # 主账号 cookie（音乐人账号）
+├── cookie2.json      # 第二账号 cookie（用于刷播放量）
+├── cookie2.txt       # 第二账号原始 cookie（Header 格式，用于导入）
+├── log/              # 日志目录
+└── database/         # 本地数据库
+```
+
 ### 使用前先登录
 
-`playids`、`task --playids`、`sign`、`scrobble` 这类命令都需要先登录。
+`playids`、`task --playids`、`task --musician-vip`、`sign`、`scrobble` 这类命令都需要先登录。
 
 最常用的是 Cookie 登录：
 
@@ -41,9 +69,20 @@
 # 直接导入 Cookie 字符串
 ncmctl login cookie 'MUSIC_U=xxx; __csrf=yyy; NMTID=zzz;'
 
-# 或从文件导入
+# 从文件导入（自动保存到默认 cookie.json）
 ncmctl login cookie -f cookie.txt
+
+# 从文件导入并指定输出路径（用于多账号管理）
+ncmctl login cookie -f cookie.txt -o cookie.json
+ncmctl login cookie -f cookie2.txt -o cookie2.json
 ```
+
+`login cookie` 支持自动探测以下文件格式：
+
+- **Header 格式**：`MUSIC_U=xxx; __csrf=yyy; ...`（支持含 URL 编码等非标准字符的宽容解析）
+- **JSON 数组格式**：`[{"name":"MUSIC_U","value":"xxx","domain":"music.163.com",...}]`（CookieCloud 导出格式）
+- **Resty Cookie Jar 格式**：`{"163.com":{"music.163.com;/;MUSIC_U":{"Name":"MUSIC_U","Value":"xxx",...}}}`（`login cookie -o` 导出格式）
+- **Netscape 格式**：标准 Netscape/Mozilla cookie 文件格式
 
 如果已经有 CookieCloud，也可以直接登录：
 
@@ -51,7 +90,7 @@ ncmctl login cookie -f cookie.txt
 ncmctl login cookiecloud -u <你的UUID> -p <你的密码> -s http://127.0.0.1:8088
 ```
 
-登录成功后，再执行 `playids` 或 `task --playids`。
+登录成功后，再执行 `playids` 或 `task --musician-vip`。
 
 ### `playids` 指定歌曲完整播放
 
@@ -90,17 +129,6 @@ ncmctl playids --ids-file ./song_ids.txt --num 50
 ncmctl playids --ids 3370932775 --num 1 --gap-min 0 --gap-max 0
 ```
 
-`song_ids.txt` 示例：
-
-```text
-3373818852
-3373845775
-3372894655
-3372989897
-3370932775
-3370931988
-```
-
 行为说明：
 
 - 输入支持 `--ids` 和 `--ids-file` 同时给出，运行前会合并并去重
@@ -115,182 +143,88 @@ ncmctl playids --ids 3370932775 --num 1 --gap-min 0 --gap-max 0
 1. 读取并去重歌曲池
 2. 查询歌曲详情与时长
 3. 调用 `SongPlayerV1` 获取播放地址
-4. 拉取整首音频流到 `io.Discard`
-5. 若拉流耗时短于歌曲时长，则补等到整首结束
+4. 拉取整首音频流到 `io.Discard`（不保存到磁盘）
+5. 若拉流耗时短于歌曲时长，则补等到整首结束（确保每首歌完整播放）
 6. 调用 `WebLog` 上报完整播放
-
-中文日志会输出：
-
-- 当前账号 `uid` 和昵称
-- 本次歌曲池明细
-- 当前正在播放第几首
-- 每首歌的成功/失败结果
-- 最终汇总结果
-
-典型日志效果：
-
-```text
-[playids] 当前账号: uid=123456789 昵称="张三"
-[playids] 任务开始: 歌曲池=3首, 目标播放=5首, 今日已完成=2首, 今日剩余=298首, 间隔=5s-20s
-[playids] 歌曲池[1]: songId=3370932775 歌名="歌A" 时长=1m17s
-[playids] 正在播放: 第1/5首, 第1轮第1首, songId=3370932775, 歌名="歌A", 时长=1m17s
-[playids] 拉流完成: songId=3370932775, 已耗时=3s, 补等待=1m14s
-[playids] 播放上报成功: songId=3370932775, 上报时长=77s
-[playids] 本首结果: 第1/5首, 成功, songId=3370932775, 歌名="歌A"
-[playids] 执行完成: 目标=5首, 成功=5首, 失败=0首
-```
-
-快速验证建议：
-
-```shell
-# 先用短歌验证 1 首
-ncmctl playids --ids 3370932775 --num 1 --gap-min 0 --gap-max 0
-
-# 再验证多首轮转
-ncmctl playids --ids 3373818852,3373845775 --num 5 --gap-min 0 --gap-max 0
-```
-
-### `task` 对 `playids` 的显式支持
-
-`playids` 不属于默认任务，只有显式传 `--playids` 才会启用。
-
-命令格式：
-
-```shell
-ncmctl task --playids [--playids.ids <songId列表>] [--playids.ids-file <文件>] [--playids.num <数量>] [--playids.cron "<cron表达式>"]
-```
-
-```shell
-# 每天按默认 cron 执行 playids
-ncmctl task --playids --playids.ids-file ./song_ids.txt --playids.num 50
-
-# 自定义 cron
-ncmctl task --playids --playids.ids 3373818852,3373845775 --playids.num 10 --playids.cron "0 19 * * *"
-```
-
-注意：
-
-- `task` 默认不会自动带上 `playids`
-- 必须显式传 `--playids`
-- 开启 `--playids` 但没有提供 `playids.ids` 或 `playids.ids-file` 时会直接报错
-- `playids` 仍与 `scrobble` 共享每日 300 首总上限
+7. 等待歌曲间隔后进入下一首
 
 ### `task --musician-vip` 音乐人黑胶会员任务
 
 `musician-vip` 用于自动完成音乐人黑胶会员的进阶任务，包括：
 
 1. **发布图文笔记任务**：自动发布带图片的动态（内容和图片可在 config.yaml 中配置）
-2. **播放任务**：自动调用 `playids` 完成有效播放（可指定非默认 cookie）
+2. **播放任务**：自动调用 `playids` 完成有效播放（支持指定独立 cookie 文件）
 
 命令格式：
 
 ```shell
-ncmctl task --musician-vip [--musician-vip.cron "<cron表达式>"]
+# 一次性执行（默认行为，执行完立即退出）
+ncmctl --home . task --musician-vip
+
+# 定时执行（进入 cron 守护模式，按表达式循环执行）
+ncmctl --home . task --musician-vip --musician-vip.cron "0 12 * * *"
 ```
 
-```shell
-# 每天 12:00 自动执行音乐人任务
-ncmctl task --musician-vip --musician-vip.cron "0 12 * * *"
+> **注意：** 不加 `--cron` 参数时为一次性执行，执行完退出。加 `--cron` 才进入守护模式。
 
-# 直接执行（不使用 cron）
-ncmctl musician-vip
-```
+任务执行流程：
+
+1. 加载主账号 cookie（`config.yaml` 中 `network.cookie.filepath`），检查音乐人身份
+2. 查询进阶任务状态（笔记任务 + 播放任务）
+3. 笔记任务：如未达标，自动发布一条图文笔记
+4. 播放任务：如未达标，创建**独立 client** 加载 `musicianVip.play.cookieFile` 中指定的 cookie，调用 `playids` 完成播放
+
+> **cookie 隔离：** 播放任务使用独立的 cookie 文件，不会覆盖主账号的 cookie.json。两个 client 各自独立加载和持久化自己的 cookie。
 
 配置说明（在 `config.yaml` 中）：
 
 ```yaml
+# 网络配置（主账号 cookie）
+network:
+  cookie:
+    filepath: "./cookie.json"    # 主账号 cookie 文件路径
+    interval: 3s                 # cookie 持久化刷新间隔
+
+# 音乐人黑胶会员任务配置
 musicianVip:
-  # 笔记发布任务配置
   note:
-    # 笔记内容（支持多条，随机选择一条）
     messages:
       - "分享一首好听的歌~"
       - "音乐是最好的陪伴"
       - "今天也要好好听歌呀"
       - "用音乐记录生活"
-    # 图片URL列表（支持多条，随机选择一张）
     imageUrls:
       - "https://picsum.photos/800/600"
-    # 动态类型: 35=普通动态, 39=图文笔记
-    type: 35
-  # 播放任务配置
+    type: 39                    # 35=普通动态, 39=图文笔记
   play:
-    # 歌曲ID列表（逗号分隔）
-    ids: ""
-    # 歌曲ID文件路径
-    idsFile: ""
-    # 每次播放数量
-    num: 300
-    # 两首歌之间最小间隔秒数
-    gapMin: 5
-    # 两首歌之间最大间隔秒数
-    gapMax: 20
-    # 非默认cookie文件路径（用于playids任务，留空则使用默认cookie）
-    cookieFile: ""
+    ids: "3366663042,3366909227,3367688879"   # 歌曲ID列表（逗号分隔）
+    idsFile: ""                                  # 或从文件读取
+    num: 5                     # 每次播放数量
+    gapMin: 5                  # 两首歌之间最小间隔秒数
+    gapMax: 20                 # 两首歌之间最大间隔秒数
+    cookieFile: "./cookie2.json"  # 播放任务专用 cookie（独立于主账号）
 ```
 
-示例配置：
+多账号工作流示例：
 
-```yaml
-musicianVip:
-  note:
-    messages:
-      - "分享一首好听的歌~"
-      - "音乐是最好的陪伴"
-    imageUrls:
-      - "https://picsum.photos/800/600"
-      - "https://picsum.photos/1024/768"
-    type: 35
-  play:
-    ids: "3373818852,3373845775,3372894655"
-    num: 10
-    gapMin: 5
-    gapMax: 20
-    cookieFile: "/path/to/other/cookie.txt"
+```shell
+# 1. 导入音乐人账号 cookie（主账号，用于检查任务状态和发布笔记）
+ncmctl --home . login cookie -f cookie.txt -o cookie.json
+
+# 2. 导入第二账号 cookie（用于刷播放量）
+ncmctl --home . login cookie -f cookie2.txt -o cookie2.json
+
+# 3. 执行音乐人任务（主账号检查 + 第二账号播放）
+ncmctl --home . task --musician-vip
 ```
 
 注意：
 
-- 需要先登录，且账号必须是音乐人
+- 需要先登录，且主账号必须是音乐人
 - 笔记任务只在"发布图文笔记天数"未达标时自动发布
 - 播放任务只在"有效播放"未达标时自动执行
-- 如果配置了 `cookieFile`，播放任务会使用指定的 cookie 文件
-- 可与 `--playids` 等其他任务同时使用
-
-### Docker 用法
-
-当前仓库建议直接使用 GitHub Container Registry 镜像：
-
-```shell
-docker pull ghcr.io/crossgg/netease-cloud-music:latest
-```
-
-如果使用 Docker，建议把歌曲文件挂载进容器，然后显式调用 `playids` 或 `task --playids`：
-
-```shell
-docker run --rm -it \
-  -v ${PWD}/data:/root \
-  -v ${PWD}/song_ids.txt:/root/song_ids.txt:ro \
-  ghcr.io/crossgg/netease-cloud-music:latest \
-  /app/ncmctl playids --ids-file /root/song_ids.txt --num 10
-```
-
-或：
-
-```shell
-docker run --rm -it \
-  -v ${PWD}/data:/root \
-  -v ${PWD}/song_ids.txt:/root/song_ids.txt:ro \
-  ghcr.io/crossgg/netease-cloud-music:latest \
-  /app/ncmctl task --playids --playids.ids-file /root/song_ids.txt --playids.num 50
-```
-
-### `playids` 与 `scrobble` 的区别
-
-|     命令     |   类型   | 说明 |
-|:----------:|:------:|:----|
-| `scrobble` | 单次任务/定时 | 从榜单里选歌并上报播放，包含满级退出逻辑与单曲去重 |
-| `playids`  | 单次任务/定时 | 播放指定 `songId` 池，真实完整播放后再上报，忽略满级但仍受每日300首上限约束 |
+- 如果配置了 `cookieFile`，播放任务会使用指定的独立 cookie 文件，与主账号 cookie 完全隔离
+- `playids` 每首歌会完整播放（拉流 + 补等待 = 歌曲完整时长），然后再上报
 
 ## 以下为原作者文档
 
