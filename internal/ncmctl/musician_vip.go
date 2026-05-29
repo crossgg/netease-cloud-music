@@ -124,8 +124,13 @@ func (c *MusicianVip) execute(ctx context.Context) error {
 
 	// 遍历子任务，检查并执行
 	for _, sub := range resp.Data.FurtherTask.Children {
+		// 播放任务使用 recentPlayCount30 作为实际进度（服务端子任务 progressRate 可能不准确）
+		progress := sub.ProgressRate
+		if sub.MissionCode == "mission_code_recently_play_count" {
+			progress = resp.Data.RecentPlayCount30
+		}
 		c.cmd.Printf("[musician-vip] 任务: %s — 状态: %d, 进度: %d/%d\\n",
-			sub.Name, sub.MissionStatus, sub.ProgressRate, sub.TotalCompleteNum)
+			sub.Name, sub.MissionStatus, progress, sub.TotalCompleteNum)
 
 		// 任务已完成则跳过
 		if sub.MissionStatus == 100 {
@@ -259,11 +264,12 @@ func (c *MusicianVip) handlePlayTask(ctx context.Context, sub eapi.MusicianVipSu
 		args = append(args, "--gap-max", fmt.Sprintf("%d", cfg.GapMax))
 	}
 
-	// 如果指定了非默认cookie文件，设置环境变量
+	// 如果指定了非默认cookie文件，临时切换cookie路径（PlayIDs会通过 c.root.Cfg.Network 读取）
 	if cfg.CookieFile != "" {
 		c.cmd.Printf("[musician-vip] 使用指定cookie文件: %s\n", cfg.CookieFile)
-		os.Setenv("NCMCTL_COOKIE_FILE", cfg.CookieFile)
-		defer os.Unsetenv("NCMCTL_COOKIE_FILE")
+		origPath := c.root.Cfg.Network.Cookie.Filepath
+		c.root.Cfg.Network.Cookie.Filepath = cfg.CookieFile
+		defer func() { c.root.Cfg.Network.Cookie.Filepath = origPath }()
 	}
 
 	c.cmd.Printf("[musician-vip] 启动playids: %v\n", args)
