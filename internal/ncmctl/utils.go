@@ -33,6 +33,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"codeberg.org/sbinet/mozcookie"
 	"github.com/chaunsin/netease-cloud-music/api/types"
@@ -196,7 +197,7 @@ func (m Music) String() string {
 	return fmt.Sprintf("%s-%s(%v) [%s]", m.ArtistString(), m.Name, m.Id, format)
 }
 
-// parseCookieFile 自动探测格式解析 cookie 文件（Netscape / JSON / Header）
+// parseCookieFile 自动探测格式解析 cookie 文件（Netscape / JSON / RestyJar / Header）
 // 与 login cookie 命令使用相同的解析逻辑
 func parseCookieFile(path string) ([]*http.Cookie, error) {
 	// 尝试 Netscape 格式（mozcookie）
@@ -208,7 +209,13 @@ func parseCookieFile(path string) ([]*http.Cookie, error) {
 		return cookies, nil
 	}
 
-	// 尝试 JSON 格式
+	// 读取文件内容用于后续尝试
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read: %w", err)
+	}
+
+	// 尝试 JSON 数组格式（[]cookiecloud.CookieData）
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("open: %w", err)
@@ -216,17 +223,22 @@ func parseCookieFile(path string) ([]*http.Cookie, error) {
 	cookies, err = ParseCookeJson(f)
 	f.Close()
 	if err != nil {
-		log.Debug("parseCookieFile json err: %s", err)
+		log.Debug("parseCookieFile json array err: %s", err)
+	}
+	if len(cookies) > 0 {
+		return cookies, nil
+	}
+
+	// 尝试 Resty cookie jar 格式（嵌套 map: domain -> path -> name -> cookie）
+	cookies, err = parseRestyCookieJar(data)
+	if err != nil {
+		log.Debug("parseCookieFile resty jar err: %s", err)
 	}
 	if len(cookies) > 0 {
 		return cookies, nil
 	}
 
 	// 尝试 Header 格式（http.ParseCookie 严格模式）
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("read: %w", err)
-	}
 	cookies, err = http.ParseCookie(string(data))
 	if err != nil {
 		log.Debug("parseCookieFile http.ParseCookie err: %s", err)
@@ -243,6 +255,52 @@ func parseCookieFile(path string) ([]*http.Cookie, error) {
 	}
 
 	return nil, fmt.Errorf("无法解析cookie文件: %s", path)
+}
+
+// restyCookieEntry resty cookie jar 中单个 cookie 的 JSON 结构
+type restyCookieEntry struct {
+	Name     string `json:"Name"`
+	Value    string `json:"Value"`
+	Domain   string `json:"Domain"`
+	Path     string `json:"Path"`
+	Secure   bool   `json:"Secure"`
+	HttpOnly bool   `json:"HttpOnly"`
+	Expires  string `json:"Expires"`
+}
+
+// parseRestyCookieJar 解析 resty cookie jar 格式的 JSON
+// 格式: {"domain": {"path;name": {"Name":..., "Value":..., ...}}}
+func parseRestyCookieJar(data []byte) ([]*http.Cookie, error) {
+	var raw map[string]map[string]restyCookieEntry
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, fmt.Errorf("not resty jar format: %w", err)
+	}
+
+	var cookies []*http.Cookie
+	for _, entries := range raw {
+		for _, entry := range entries {
+			c := &http.Cookie{
+				Name:     entry.Name,
+				Value:    entry.Value,
+				Domain:   entry.Domain,
+				Path:     entry.Path,
+				Secure:   entry.Secure,
+				HttpOnly: entry.HttpOnly,
+			}
+			// 解析过期时间
+			if entry.Expires != "" && entry.Expires != "0001-01-01T00:00:00Z" {
+				if t, err := time.Parse(time.RFC3339, entry.Expires); err == nil {
+					c.Expires = t
+				}
+			}
+			cookies = append(cookies, c)
+		}
+	}
+
+	if len(cookies) == 0 {
+		return nil, fmt.Errorf("no cookies found in resty jar")
+	}
+	return cookies, nil
 }
 
 func parseCookieStringFallback(s string) []*http.Cookie {
