@@ -1,38 +1,3 @@
-<a href="https://github.com/3899/ncmm">
-  <img src="https://socialify.git.ci/3899/ncmm/image?description=1&descriptionEditable=%E5%9F%BA%E4%BA%8E%20Go%20%E7%9A%84%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90%E4%BA%BA%E5%8A%A9%E6%89%8B%EF%BC%9A%E4%B8%80%E9%94%AE%E7%AD%BE%E5%88%B0%E3%80%81%E8%87%AA%E5%8A%A8%E4%BB%BB%E5%8A%A1%E3%80%81%E6%8E%A5%E5%8A%9B%E5%88%B7%E6%92%AD&font=Source%20Code%20Pro&logo=https%3A%2F%2Fp6.music.126.net%2Fobj%2Fwo3DlcOGw6DClTvDisK1%2F62177614927%2F22ad%2F1953%2Fa6cf%2Fe7007953d5942445a0444ca346bd06be.png%3Fraw%3Dtrue&name=1&owner=1&pattern=Floating%20Cogs&theme=Auto" alt="ncmm" />
-</a>
-
-<div align="center">
-  <br/>
-
-  <div>
-    <a href="./LICENSE">
-      <img
-        src="https://img.shields.io/github/license/3899/ncmm?style=flat-square"
-      />
-    </a>
-    <a href="https://github.com/3899/ncmm/releases">
-      <img
-        src="https://img.shields.io/github/v/release/3899/ncmm?style=flat-square"
-      />
-    </a>
-    <a href="https://github.com/3899/ncmm/releases">
-      <img
-        src="https://img.shields.io/github/downloads/3899/ncmm/total?style=flat-square"
-      />  
-    </a>
-    <a href="https://github.com/3899/ncmm/pkgs/container/ncmm">
-      <img
-        src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fghcr-badge.elias.eu.org%2Fapi%2F3899%2Fncmm&query=downloadCount&style=flat-square&logo=docker&label=Docker%20Pulls&color=2496ed"
-      />
-    </a>
-    <a href="https://github.com/3899/ncmm/pkgs/container/ncmm">
-      <img
-        src="https://ghcr-badge.egpl.dev/3899/ncmm/size?color=%23FF7F50&tag=latest&style=flat-square"
-      />
-    </a>
-  </div>
-</div>
 
 # 🎵 ncmm
 
@@ -96,19 +61,18 @@
 
 ## 🎖️ 鸣谢
 
+## 社区支持
+
+学 AI , 上 L 站：[LinuxDO](https://linux.do)
+
 ### 👥 贡献者
 
-感谢大家为 ncmm 做出的宝贵贡献！如果你也希望为 ncmm 做出贡献，请查阅 [贡献指南](./.github/CONTRIBUTING.md)。
-
-<a href="https://github.com/3899/ncmm/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=3899/ncmm" />
-</a>
-
+[3899](https://github.com/3899)
 
 ### 📦 参考项目
 | 项目 | 说明 |
 | :--- | :--- |
 | [chaunsin/netease-cloud-music](https://github.com/chaunsin/netease-cloud-music) | 网易云音乐 API |
-| [crossgg/netease-cloud-music](https://github.com/crossgg/netease-cloud-music) | 网易云音乐人任务 |
-| [NeteaseCloudMusicApiEnhanced/api-enhanced](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced) | 网易云音乐API接口 |
+| [3899/netease-cloud-music](https://github.com/3899/ncmm) | 网易云音乐人任务 |
+| [NeteaseCloudMusicApiEnhanced/api-enhanced](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced) | 全网最全的网易云音乐API接口 |
 | 所有依赖的开源项目 | |
