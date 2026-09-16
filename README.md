@@ -1,6 +1,6 @@
-<a href="https://github.com/3899/ncmm">
-  <img src="https://socialify.git.ci/3899/ncmm/image?description=1&descriptionEditable=%E5%9F%BA%E4%BA%8E%20Go%20%E7%9A%84%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90%E4%BA%BA%E5%8A%A9%E6%89%8B%EF%BC%9A%E4%B8%80%E9%94%AE%E7%AD%BE%E5%88%B0%E3%80%81%E8%87%AA%E5%8A%A8%E4%BB%BB%E5%8A%A1%E3%80%81%E6%8E%A5%E5%8A%9B%E5%88%B7%E6%92%AD&font=Source%20Code%20Pro&logo=https%3A%2F%2Fp6.music.126.net%2Fobj%2Fwo3DlcOGw6DClTvDisK1%2F62177614927%2F22ad%2F1953%2Fa6cf%2Fe7007953d5942445a0444ca346bd06be.png%3Fraw%3Dtrue&name=1&owner=1&pattern=Floating%20Cogs&theme=Auto" alt="ncmm" />
-</a>
+后续更新已转到新项目：https://github.com/crossgg/ncmm
+
+-------------------
 
 <div align="center">
   <br/>
@@ -124,6 +124,8 @@
 <a href="https://github.com/3899/ncmm/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=3899/ncmm" />
 </a>
+### 推广 
+https://vsllm.com
 
 
 ### 📦 参考项目
